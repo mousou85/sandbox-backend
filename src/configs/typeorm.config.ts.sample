@@ -1,0 +1,13 @@
+import {TypeOrmModuleOptions} from "@nestjs/typeorm";
+
+export const typeORMConfig: TypeOrmModuleOptions = {
+  type: '',
+  host: '',
+  port: null,
+  username: '',
+  password: '',
+  database: '',
+  schema: '',
+  entities: [__dirname + '/../**/*.entity.{js,ts}'],
+  synchronize: false
+}
