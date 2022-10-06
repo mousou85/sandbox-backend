@@ -26,28 +26,26 @@ export class BoardService
   {
     return this._boardRepository.createBoard(createBoardDto);
   }
-  //
-  // public getBoardById(id: string): BoardModel
-  // {
-  //   const found = this._boards.find((board) => board.id == id);
-  //   if (!found) {
-  //     throw new NotFoundException();
-  //   }
-  //
-  //   return found;
-  // }
-  //
-  // public deleteBoard(id: string): void
-  // {
-  //   const found = this.getBoardById(id);
-  //
-  //   this._boards = this._boards.filter((board) => board.id != found.id);
-  // }
-  //
-  // public updateBoardStatus(id: string, status: BoardStatus): BoardModel
-  // {
-  //   const board = this.getBoardById(id);
-  //   board.status = status;
-  //   return board;
-  // }
+
+  public async deleteBoard(id: number): Promise<void>
+  {
+    const result = await this._boardRepository.delete(id);
+    if (result.affected === 0) {
+      throw new NotFoundException(`Can't find board with id ${id}`);
+    }
+  }
+
+  public async updateBoardStatus(id: number, status: BoardStatus): Promise<BoardEntity>
+  {
+    const board = await this.getBoardById(id);
+    board.status = status;
+    await this._boardRepository.save(board);
+
+    return board;
+  }
+
+  public async getAllBoards(): Promise<BoardEntity[]>
+  {
+    return this._boardRepository.find();
+  }
 }

@@ -5,7 +5,7 @@ export class BoardStatusValidationPipe implements PipeTransform
 {
   public readonly StatusOptions = [
     BoardStatus.PUBLIC,
-    BoardStatus.PUBLIC
+    BoardStatus.PRIVATE
   ];
 
   transform(value: any, metadata: ArgumentMetadata): any

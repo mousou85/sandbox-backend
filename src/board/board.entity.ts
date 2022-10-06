@@ -5,7 +5,7 @@ export enum BoardStatus {
   PRIVATE = 'PRIVATE'
 }
 
-@Entity()
+@Entity('board')
 export class BoardEntity extends BaseEntity {
   @PrimaryGeneratedColumn()
   id: number;
