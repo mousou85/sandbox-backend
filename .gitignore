@@ -3,3 +3,4 @@
 /test/
 /dist/
 src/configs/typeorm.config.ts
+src/configs/auth.config.ts
