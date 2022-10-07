@@ -6,10 +6,7 @@ import {CreateBoardDto} from "./dto/CreateBoard.dto";
 
 @Injectable()
 export class BoardRepository extends Repository<BoardEntity>{
-  constructor(
-    @InjectRepository(BoardEntity)
-    repository: Repository<BoardEntity>
-  ) {
+  constructor(@InjectRepository(BoardEntity) repository: Repository<BoardEntity>) {
     super(repository.target, repository.manager, repository.queryRunner);
   }
 
