@@ -76,7 +76,8 @@
       "@app/(.*)$": "<rootDir>/$1",
       "@config$": "<rootDir>/config/index.ts",
       "@config/(.*)$": "<rootDir>/config/$1",
-      "@db/(.*)$": "<rootDir>/db/$1"
+      "@db/(.*)$": "<rootDir>/db/$1",
+      "@helper$": "<rootDir>/helper/index.ts"
     }
   }
 }

@@ -22,7 +22,8 @@
       "@app/*": ["./src/*"],
       "@config": ["./src/config/index.ts"],
       "@config/*": ["./src/config/*"],
-      "@db/*": ["./src/db/*"]
+      "@db/*": ["./src/db/*"],
+      "@helper": ["./src/helper/index.ts"]
     }
   }
 }
