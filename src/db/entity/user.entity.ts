@@ -1,8 +1,9 @@
-import {BaseEntity, Column, Entity, Index, PrimaryGeneratedColumn} from 'typeorm';
+import {BaseEntity, Column, Entity, Index, PrimaryGeneratedColumn, Unique} from 'typeorm';
 import {EYNState} from '@db/db.enum';
 import {DateTransformer} from '@db/transformer';
 
 @Entity('users')
+@Unique('UNIQ_UID', ['uid'])
 @Index('IDX_USER_ID', ['id'])
 @Index('IDX_CREATED_AT', ['created_at'])
 @Index('IDX_LAST_LOGIN_AT', ['last_login_at'])
@@ -13,6 +14,14 @@ export class UserEntity extends BaseEntity {
     comment: 'user IDX',
   })
   user_idx: number;
+
+  @Column({
+    type: 'varchar',
+    length: 50,
+    nullable: false,
+    comment: 'uid',
+  })
+  uid: string;
 
   @Column({
     type: 'varchar',

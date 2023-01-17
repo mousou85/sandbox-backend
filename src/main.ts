@@ -3,6 +3,9 @@ import {AppModule} from '@app/app.module';
 import * as process from 'process';
 import {createLogger} from '@common/logger';
 import {ValidationPipe} from '@nestjs/common';
+import {GlobalExceptionFilter} from '@common/global';
+
+declare const module: any;
 
 async function bootstrap() {
   //set logger
@@ -21,6 +24,14 @@ async function bootstrap() {
     })
   );
 
+  //set global filter
+  app.useGlobalFilters(new GlobalExceptionFilter(logger));
+
   await app.listen(process.env.PORT ?? 3000, '0.0.0.0');
+
+  if (module.hot) {
+    module.hot.accept();
+    module.hot.dispose(() => app.close());
+  }
 }
 bootstrap();
