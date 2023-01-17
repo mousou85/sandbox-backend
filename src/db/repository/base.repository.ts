@@ -1,6 +1,6 @@
 import {BaseEntity, Repository, SelectQueryBuilder} from 'typeorm';
 import {IFindAllResult, IQueryListOption} from '@db/db.interface';
-import {CommonHelper} from '@helper';
+import {CommonHelper} from '@common/helper';
 
 export abstract class BaseRepository<Entity extends BaseEntity> extends Repository<Entity> {
   /**
