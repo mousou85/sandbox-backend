@@ -4,12 +4,14 @@ import {UserEntity} from '@db/entity';
 import {InjectRepository} from '@nestjs/typeorm';
 import {BaseRepository} from '@db/repository/base.repository';
 import {EYNState} from '@db/db.enum';
+import {IFindAllResult, IQueryListOption} from '@db/db.interface';
 
 export interface IUserCondition {
-  id: string;
-  name: string;
-  created_at: {begin: string; end: string};
-  use_otp: EYNState;
+  user_idx?: number;
+  id?: string;
+  name?: string;
+  created_at?: {begin: string; end: string};
+  use_otp?: EYNState;
 }
 
 @Injectable()
@@ -26,6 +28,9 @@ export class UserRepository extends BaseRepository<UserEntity> {
     queryBuilder: SelectQueryBuilder<UserEntity>,
     condition: IUserCondition
   ) {
+    if (condition.user_idx) {
+      queryBuilder.andWhere('user.user_idx = :user_idx', {user_idx: condition.user_idx});
+    }
     if (condition.id) {
       queryBuilder.andWhere('user.id = :id', {id: condition.id.trim()});
     }
@@ -46,5 +51,16 @@ export class UserRepository extends BaseRepository<UserEntity> {
     }
 
     return queryBuilder;
+  }
+
+  async findByCondition(condition: IUserCondition): Promise<UserEntity | null> {
+    return super.findByCondition(condition);
+  }
+
+  async findAllByCondition(
+    condition: IUserCondition,
+    listOption?: IQueryListOption
+  ): Promise<IFindAllResult<UserEntity>> {
+    return super.findAllByCondition(condition, listOption);
   }
 }
