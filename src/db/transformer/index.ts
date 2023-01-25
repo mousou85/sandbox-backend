@@ -1,2 +1,3 @@
 export * from './parseInt.transformer';
-export * from './date.transformers';
+export * from './date.transformer';
+export * from './ip2long.transformer';

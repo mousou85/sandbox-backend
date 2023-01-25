@@ -1,8 +1,8 @@
 /**
  * Y/N enum
  */
-export const EYNState = {
+const EYNState = {
   y: 'y',
   n: 'n',
 } as const;
-export type EYNState = typeof EYNState[keyof typeof EYNState];
+export type EYNState = (typeof EYNState)[keyof typeof EYNState];

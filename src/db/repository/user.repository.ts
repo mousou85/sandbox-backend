@@ -1,6 +1,6 @@
 import {Injectable} from '@nestjs/common';
 import {Repository, SelectQueryBuilder} from 'typeorm';
-import {UserEntity} from '@db/entity';
+import {UserEntity, UserPasswordSaltEntity} from '@db/entity';
 import {InjectRepository} from '@nestjs/typeorm';
 import {BaseRepository} from '@db/repository/base.repository';
 import {EYNState} from '@db/db.enum';
@@ -16,7 +16,12 @@ export interface IUserCondition {
 
 @Injectable()
 export class UserRepository extends BaseRepository<UserEntity> {
-  constructor(@InjectRepository(UserEntity) protected repository: Repository<UserEntity>) {
+  constructor(
+    @InjectRepository(UserEntity)
+    protected repository: Repository<UserEntity>,
+    @InjectRepository(UserPasswordSaltEntity)
+    protected userPasswordSaltRepository: Repository<UserPasswordSaltEntity>
+  ) {
     super(repository.target, repository.manager, repository.queryRunner);
   }
 
@@ -62,5 +67,26 @@ export class UserRepository extends BaseRepository<UserEntity> {
     listOption?: IQueryListOption
   ): Promise<IFindAllResult<UserEntity>> {
     return super.findAllByCondition(condition, listOption);
+  }
+
+  /**
+   * password salt 반환
+   * @param userIdx
+   */
+  async getPasswordSalt(userIdx: number): Promise<string | null> {
+    const result = await this.userPasswordSaltRepository.findOneBy({user_idx: userIdx});
+    return result ? result.salt : null;
+  }
+
+  /**
+   * login fail count 증가
+   * @param userIdx
+   */
+  async increaseLoginFailCount(userIdx: number): Promise<void> {
+    const entity = await this.findOneBy({user_idx: userIdx});
+    if (!entity) return;
+
+    entity.login_fail_count += 1;
+    await this.save(entity, {reload: false});
   }
 }

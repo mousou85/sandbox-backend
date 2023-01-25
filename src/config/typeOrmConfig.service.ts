@@ -1,7 +1,7 @@
 import {Injectable} from '@nestjs/common';
 import {TypeOrmModuleOptions, TypeOrmOptionsFactory} from '@nestjs/typeorm';
 import {ConfigService} from '@nestjs/config';
-import {UserEntity} from '@db/entity';
+import {UserEntity, UserLoginLogEntity} from '@db/entity';
 
 @Injectable()
 export class TypeOrmConfigService implements TypeOrmOptionsFactory {
@@ -20,7 +20,7 @@ export class TypeOrmConfigService implements TypeOrmOptionsFactory {
       synchronize: false,
       dateStrings: false,
       timezone: '+09:00',
-      entities: [UserEntity],
+      entities: [UserEntity, UserLoginLogEntity],
     };
   }
 }
