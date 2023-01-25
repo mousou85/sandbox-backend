@@ -4,9 +4,10 @@ import {ConfigModule as AppConfigModule} from '@config/config.module';
 import {TypeOrmConfigService} from '@config';
 import {TypeOrmModule} from '@nestjs/typeorm';
 import {DbModule} from '@db/db.module';
-import {AppController} from '@app/app.controller';
 import {HttpLoggerMiddleware} from '@common/middleware';
 import {APP_PIPE} from '@nestjs/core';
+import {AuthModule} from '@app/auth/auth.module';
+import {UserModule} from '@app/user/user.module';
 
 @Module({
   imports: [
@@ -17,8 +18,10 @@ import {APP_PIPE} from '@nestjs/core';
       inject: [TypeOrmConfigService],
     }),
     DbModule,
+    AuthModule,
+    UserModule,
   ],
-  controllers: [AppController],
+  controllers: [],
   providers: [Logger, {provide: APP_PIPE, useClass: ValidationPipe}],
 })
 export class AppModule implements NestModule {

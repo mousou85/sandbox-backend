@@ -1,7 +1,7 @@
 /**
  * Y/N enum
  */
-const EYNState = {
+export const EYNState = {
   y: 'y',
   n: 'n',
 } as const;
