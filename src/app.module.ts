@@ -8,6 +8,7 @@ import {HttpLoggerMiddleware} from '@common/middleware';
 import {APP_PIPE} from '@nestjs/core';
 import {AuthModule} from '@app/auth/auth.module';
 import {UserModule} from '@app/user/user.module';
+import {ClsModule} from 'nestjs-cls';
 
 @Module({
   imports: [
@@ -16,6 +17,10 @@ import {UserModule} from '@app/user/user.module';
       imports: [AppConfigModule],
       useClass: TypeOrmConfigService,
       inject: [TypeOrmConfigService],
+    }),
+    ClsModule.forRoot({
+      global: true,
+      // middleware: {mount: true},
     }),
     DbModule,
     AuthModule,

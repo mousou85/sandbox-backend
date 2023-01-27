@@ -5,7 +5,7 @@ import {IsEnum, IsInt, IsNotEmpty, IsOptional, IsString, MaxLength} from 'class-
 import {Expose, Transform} from 'class-transformer';
 import {DtoTransform} from '@common/dto.transform';
 import {EYNState} from '@db/db.enum';
-import {IsDateString} from '@common/validateDecorator';
+import {IsDateString} from '@common/decorator/validate';
 
 /**
  * user entity DTO

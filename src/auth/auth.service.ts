@@ -2,16 +2,19 @@ import {BadRequestException, Injectable, UnauthorizedException} from '@nestjs/co
 import {UserLoginLogRepository, UserRepository} from '@db/repository';
 import {MissingParameterException, UserNotFoundException} from '@common/exception';
 import {UserService} from '@app/user/service/user.service';
+import {UserEntity} from '@db/entity';
+import {ClsService} from 'nestjs-cls';
 
 @Injectable()
 export class AuthService {
   constructor(
     protected userRepository: UserRepository,
     protected userLoginLogRepository: UserLoginLogRepository,
-    protected userService: UserService
+    protected userService: UserService,
+    protected cls: ClsService
   ) {}
 
-  async validateUser(id: string, password: string) {
+  async validateUser(id: string, password: string): Promise<UserEntity> {
     if (!id || !password) {
       throw new MissingParameterException();
     }
@@ -37,5 +40,7 @@ export class AuthService {
       );
       throw new UnauthorizedException();
     }
+
+    return userEntity;
   }
 }

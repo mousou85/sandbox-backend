@@ -1,6 +1,7 @@
 import {Injectable, LoggerService, NestMiddleware} from '@nestjs/common';
 import {Request, Response} from 'express';
 import {createLogger} from '@common/logger/app.logger';
+import {HttpHelper} from '@common/helper';
 
 /**
  * HTTP 접속 로거 미들웨어
@@ -14,12 +15,15 @@ export class HttpLoggerMiddleware implements NestMiddleware {
   }
 
   use(req: Request, res: Response, next: (error?: any) => void): any {
-    const {ip, method, originalUrl} = req;
-    const userAgent = req.get('user-agent');
+    const requestId = HttpHelper.getRequestId();
+    const ip = HttpHelper.getRemoteIp();
+    const method = HttpHelper.getMethod();
+    const userAgent = HttpHelper.getUserAgent();
+    const originalUrl = HttpHelper.getOriginalUrl();
 
     res.on('finish', () => {
       const {statusCode} = res;
-      this.logger.log(`${method} ${originalUrl} ${statusCode} ${ip} ${userAgent}`);
+      this.logger.log(`[${requestId}] ${method} ${originalUrl} ${statusCode} ${ip} ${userAgent}`);
     });
 
     next();
