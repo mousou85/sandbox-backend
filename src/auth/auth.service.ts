@@ -1,9 +1,12 @@
-import {BadRequestException, Injectable, UnauthorizedException} from '@nestjs/common';
+import {BadRequestException, Inject, Injectable, UnauthorizedException} from '@nestjs/common';
 import {UserLoginLogRepository, UserRepository} from '@db/repository';
 import {MissingParameterException, UserNotFoundException} from '@common/exception';
 import {UserService} from '@app/user/service/user.service';
 import {UserEntity} from '@db/entity';
 import {ClsService} from 'nestjs-cls';
+import {JwtService} from '@nestjs/jwt';
+import {jwtConfig as jwtConfigBase} from '@config';
+import {ConfigType} from '@nestjs/config';
 
 @Injectable()
 export class AuthService {
@@ -11,7 +14,9 @@ export class AuthService {
     protected userRepository: UserRepository,
     protected userLoginLogRepository: UserLoginLogRepository,
     protected userService: UserService,
-    protected cls: ClsService
+    protected cls: ClsService,
+    protected jwtService: JwtService,
+    @Inject(jwtConfigBase.KEY) protected jwtConfig: ConfigType<typeof jwtConfigBase>
   ) {}
 
   async validateUser(id: string, password: string): Promise<UserEntity> {
@@ -42,5 +47,21 @@ export class AuthService {
     }
 
     return userEntity;
+  }
+
+  createAccessToken(userEntity: UserEntity): string {
+    return this.jwtService.sign({uid: userEntity.uid});
+  }
+
+  createRefreshToken(userEntity: UserEntity): string {
+    return this.jwtService.sign(
+      {uid: userEntity.uid},
+      {
+        secret: this.jwtConfig.refreshTokenSecret,
+        algorithm: this.jwtConfig.refreshTokenAlgorithm,
+        expiresIn: this.jwtConfig.refreshTokenExpire,
+        issuer: this.jwtConfig.issuer,
+      }
+    );
   }
 }

@@ -1,1 +1,2 @@
-export * from './typeOrmConfig.service';
+export * from './jwt.config';
+export * from './db.config';

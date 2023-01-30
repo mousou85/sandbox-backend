@@ -1,7 +1,7 @@
 import {Module} from '@nestjs/common';
-import {TypeOrmConfigService} from '@config';
+import {TypeOrmOptionService} from '@config/service';
 
 @Module({
-  providers: [TypeOrmConfigService],
+  providers: [TypeOrmOptionService],
 })
 export class ConfigModule {}

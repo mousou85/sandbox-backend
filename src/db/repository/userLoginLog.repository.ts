@@ -4,6 +4,7 @@ import {EUserLoginLogType, UserLoginLogEntity} from '@db/entity';
 import {InjectRepository} from '@nestjs/typeorm';
 import {BaseRepository} from '@db/repository/base.repository';
 import {IFindAllResult, IQueryListOption} from '@db/db.interface';
+import {HttpHelper} from '@common/helper';
 
 export interface IUserLoginLogCondition {
   user_idx?: number;
@@ -81,8 +82,8 @@ export class UserLoginLogRepository extends BaseRepository<UserLoginLogEntity> {
     const entity = this.create();
     entity.user_idx = userIdx;
     entity.log_type = logType;
-    entity.ip = ip;
-    if (userAgent) entity.user_agent = userAgent;
+    entity.ip = ip ?? HttpHelper.getRemoteIp();
+    entity.user_agent = userAgent ?? HttpHelper.getUserAgent();
     if (createdAt) entity.created_at = createdAt;
 
     queryRunner
