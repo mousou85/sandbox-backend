@@ -1,22 +1,27 @@
-import {Body, Controller, HttpCode, Inject, Logger, LoggerService, Post} from '@nestjs/common';
+import {Controller, HttpCode, Inject, Logger, LoggerService, Post, UseGuards} from '@nestjs/common';
 import {AuthService} from '@app/auth/auth.service';
-import {UserCredentialDto} from '@app/auth/dto';
+import {LocalAuthGuard} from '@app/auth/authGuard';
+import {User} from '@app/auth/auth.decorator';
+import {LoginSuccessDto} from '@app/auth/dto';
+import {OkResponseDto} from '@common/dto';
 
 @Controller('/auth')
 export class AuthController {
   constructor(@Inject(Logger) private logger: LoggerService, private authService: AuthService) {}
 
-  // @UseInterceptors(UserIpInterceptor)
+  @UseGuards(LocalAuthGuard)
   @Post('/login')
   @HttpCode(200)
-  async login(@Body() userCredential: UserCredentialDto) {
-    const {userId, password} = userCredential;
+  async login(@User() user) {
+    const accessToken = this.authService.createAccessToken(user);
+    const refreshToken = this.authService.createRefreshToken(user);
 
-    //set vars: user entity
-    const userEntity = await this.authService.validateUser(userId, password);
-    console.log(this.authService.createAccessToken(userEntity));
-    console.log(this.authService.createRefreshToken(userEntity));
-    // console.log(HttpHelper.getHeaders(), HttpHelper.getHeader('accept'));
-    // await this.authService.validateUser('mousou85@gmail.com', 'assas132');
+    const loginSuccessDto = new LoginSuccessDto().fromInstance({
+      accessToken,
+      refreshToken,
+      ...user,
+    });
+
+    return new OkResponseDto(loginSuccessDto);
   }
 }

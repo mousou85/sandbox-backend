@@ -3,8 +3,9 @@ import {Expose, Transform} from 'class-transformer';
 import {IsNotEmpty} from 'class-validator';
 import {IsEnum, IsInt} from '@common/decorator/validate';
 import {DtoTransform} from '@common/dto.transform';
+import {DefaultDto} from '@common/dto';
 
-export class LoginSuccessDto {
+export class LoginSuccessDto extends DefaultDto<any> {
   @ApiProperty({description: 'access token', required: true})
   @Expose()
   @IsNotEmpty()

@@ -3,7 +3,6 @@ import {UserLoginLogRepository, UserRepository} from '@db/repository';
 import {MissingParameterException, UserNotFoundException} from '@common/exception';
 import {UserService} from '@app/user/service/user.service';
 import {UserEntity} from '@db/entity';
-import {ClsService} from 'nestjs-cls';
 import {JwtService} from '@nestjs/jwt';
 import {jwtConfig as jwtConfigBase} from '@config';
 import {ConfigType} from '@nestjs/config';
@@ -14,7 +13,6 @@ export class AuthService {
     protected userRepository: UserRepository,
     protected userLoginLogRepository: UserLoginLogRepository,
     protected userService: UserService,
-    protected cls: ClsService,
     protected jwtService: JwtService,
     @Inject(jwtConfigBase.KEY) protected jwtConfig: ConfigType<typeof jwtConfigBase>
   ) {}
