@@ -12,6 +12,7 @@ import {PassportModule} from '@nestjs/passport';
 
 @Module({
   imports: [
+    DbModule,
     PassportModule,
     JwtModule.registerAsync({
       imports: [AppConfigModule],
@@ -27,7 +28,6 @@ import {PassportModule} from '@nestjs/passport';
         };
       },
     }),
-    DbModule,
     UserModule,
   ],
   controllers: [AuthController],

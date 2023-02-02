@@ -6,6 +6,4 @@ import {HttpHelper} from '@common/helper';
  */
 export const UserAgent = createParamDecorator((data, ctx: ExecutionContext): string => {
   return HttpHelper.getUserAgent();
-  // const req = ctx.switchToHttp().getRequest();
-  // return req.headers['user-agent'];
 });

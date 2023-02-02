@@ -1,9 +1,19 @@
-import {Controller, HttpCode, Inject, Logger, LoggerService, Post, UseGuards} from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  HttpCode,
+  Inject,
+  Logger,
+  LoggerService,
+  Post,
+  UseGuards,
+} from '@nestjs/common';
 import {AuthService} from '@app/auth/auth.service';
-import {LocalAuthGuard} from '@app/auth/authGuard';
+import {JwtAuthGuard, LocalAuthGuard} from '@app/auth/authGuard';
 import {User} from '@app/auth/auth.decorator';
 import {LoginSuccessDto} from '@app/auth/dto';
 import {OkResponseDto} from '@common/dto';
+import {UserEntity} from '@db/entity';
 
 @Controller('/auth')
 export class AuthController {
@@ -23,5 +33,11 @@ export class AuthController {
     });
 
     return new OkResponseDto(loginSuccessDto);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Get('/test')
+  async test(@User() user: UserEntity) {
+    console.log(user);
   }
 }

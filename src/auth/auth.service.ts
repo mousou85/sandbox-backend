@@ -6,6 +6,7 @@ import {UserEntity} from '@db/entity';
 import {JwtService} from '@nestjs/jwt';
 import {jwtConfig as jwtConfigBase} from '@config';
 import {ConfigType} from '@nestjs/config';
+import {TokenExpiredError} from 'jsonwebtoken';
 
 @Injectable()
 export class AuthService {
@@ -17,6 +18,11 @@ export class AuthService {
     @Inject(jwtConfigBase.KEY) protected jwtConfig: ConfigType<typeof jwtConfigBase>
   ) {}
 
+  /**
+   * id/password 기반 유저 확인
+   * @param id
+   * @param password
+   */
   async validateUser(id: string, password: string): Promise<UserEntity> {
     if (!id || !password) {
       throw new MissingParameterException();
@@ -47,10 +53,50 @@ export class AuthService {
     return userEntity;
   }
 
+  /**
+   * uid 기반 유저 확인
+   * @param uid
+   */
+  async validateUserByUid(uid: string): Promise<UserEntity> {
+    //set vars: user entity
+    const userEntity = await this.userRepository.findOneBy({uid});
+    if (!userEntity) {
+      throw new UserNotFoundException();
+    }
+
+    return userEntity;
+  }
+
+  /**
+   * access token 생성
+   * @param userEntity
+   */
   createAccessToken(userEntity: UserEntity): string {
     return this.jwtService.sign({uid: userEntity.uid});
   }
 
+  /**
+   * access token 검증
+   * @param accessToken
+   */
+  verifyAccessToken(accessToken: string) {
+    try {
+      return this.jwtService.verify(accessToken, {
+        algorithms: [this.jwtConfig.accessTokenAlgorithm],
+        issuer: this.jwtConfig.issuer,
+        ignoreExpiration: false,
+      });
+    } catch (err) {
+      throw new UnauthorizedException(
+        err instanceof TokenExpiredError ? 'Token Expired' : err.message
+      );
+    }
+  }
+
+  /**
+   * refresh token 생성
+   * @param userEntity
+   */
   createRefreshToken(userEntity: UserEntity): string {
     return this.jwtService.sign(
       {uid: userEntity.uid},
@@ -61,5 +107,22 @@ export class AuthService {
         issuer: this.jwtConfig.issuer,
       }
     );
+  }
+
+  /**
+   * refresh token 검증
+   * @param refreshToken
+   */
+  verifyRefreshToken(refreshToken: string) {
+    try {
+      return this.jwtService.verify(refreshToken, {
+        secret: this.jwtConfig.refreshTokenSecret,
+        algorithms: [this.jwtConfig.refreshTokenAlgorithm],
+        issuer: this.jwtConfig.issuer,
+        ignoreExpiration: false,
+      });
+    } catch (err) {
+      throw new UnauthorizedException(err instanceof TokenExpiredError ? 'Token Expired' : err);
+    }
   }
 }
