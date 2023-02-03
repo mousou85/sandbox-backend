@@ -37,7 +37,5 @@ export class AuthController {
 
   @UseGuards(JwtAuthGuard)
   @Get('/test')
-  async test(@User() user: UserEntity) {
-    console.log(user);
-  }
+  async test(@User() user: UserEntity) {}
 }

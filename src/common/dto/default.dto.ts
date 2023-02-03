@@ -1,4 +1,5 @@
-import {Exclude, instanceToPlain, plainToClassFromExist} from 'class-transformer';
+import {Exclude} from 'class-transformer';
+import {DtoHelper} from '@common/helper';
 
 /**
  * default dto
@@ -6,8 +7,7 @@ import {Exclude, instanceToPlain, plainToClassFromExist} from 'class-transformer
 export class DefaultDto<T> {
   @Exclude()
   fromInstance(instance: T): this {
-    const plain = instanceToPlain(instance);
-    plainToClassFromExist(this, plain, {excludeExtraneousValues: true});
+    DtoHelper.transformForExistsDto(instance, this);
     return this;
   }
 }

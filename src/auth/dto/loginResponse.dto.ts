@@ -21,7 +21,7 @@ export class LoginSuccessDto extends DefaultDto<any> {
   @IsInt({allowEmptyString: false})
   @IsNotEmpty()
   @Transform(({value}) => DtoTransform.parseInt(value))
-  user_idx: string;
+  userIdx: string;
 
   @ApiProperty({description: 'user id', required: true})
   @Expose()
@@ -37,5 +37,5 @@ export class LoginSuccessDto extends DefaultDto<any> {
   @Expose()
   @IsEnum(['y', 'n'], {allowEmptyString: false})
   @IsNotEmpty()
-  use_otp: 'y' | 'n';
+  useOtp: 'y' | 'n';
 }
