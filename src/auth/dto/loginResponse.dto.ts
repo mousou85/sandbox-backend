@@ -1,6 +1,6 @@
 import {ApiProperty} from '@nestjs/swagger';
 import {Expose, Transform} from 'class-transformer';
-import {IsNotEmpty} from 'class-validator';
+import {IsBoolean, IsNotEmpty} from 'class-validator';
 import {IsEnum, IsInt} from '@common/decorator/validate';
 import {DtoTransform} from '@common/dto.transform';
 import {DefaultDto} from '@common/dto';
@@ -38,4 +38,12 @@ export class LoginSuccessDto extends DefaultDto<any> {
   @IsEnum(['y', 'n'], {allowEmptyString: false})
   @IsNotEmpty()
   useOtp: 'y' | 'n';
+}
+
+export class NeedOtpVerifyDto extends DefaultDto<any> {
+  @ApiProperty({description: 'need otp verify', required: true})
+  @Expose()
+  @IsBoolean()
+  @IsNotEmpty()
+  needOTPVerify: boolean;
 }

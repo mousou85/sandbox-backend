@@ -6,6 +6,7 @@ import {ValidationPipe} from '@nestjs/common';
 import {GlobalExceptionFilter} from '@common/global';
 import {ClsMiddleware} from 'nestjs-cls';
 import {clsIdGenerator, clsMiddlewareSetup} from '@common/middleware/cls.middleware';
+import {enableSwaggerModule} from '@common/swagger';
 
 declare const module: any;
 
@@ -37,6 +38,11 @@ async function bootstrap() {
 
   //set global filter
   app.useGlobalFilters(new GlobalExceptionFilter(logger));
+
+  //enable swagger module
+  if (process.env.NODE_ENV == 'development') {
+    enableSwaggerModule(app);
+  }
 
   await app.listen(process.env.PORT ?? 3000, '0.0.0.0');
 

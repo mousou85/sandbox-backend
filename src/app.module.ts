@@ -1,4 +1,11 @@
-import {Logger, MiddlewareConsumer, Module, NestModule, ValidationPipe} from '@nestjs/common';
+import {
+  forwardRef,
+  Logger,
+  MiddlewareConsumer,
+  Module,
+  NestModule,
+  ValidationPipe,
+} from '@nestjs/common';
 import {ConfigModule} from '@nestjs/config';
 import {ConfigModule as AppConfigModule} from '@config/config.module';
 import {TypeOrmModule} from '@nestjs/typeorm';
@@ -24,7 +31,7 @@ import {jwtConfig, typeOrmConfig} from '@config';
       inject: [TypeOrmOptionService],
     }),
     DbModule,
-    AuthModule,
+    forwardRef(() => AuthModule),
     UserModule,
   ],
   controllers: [],

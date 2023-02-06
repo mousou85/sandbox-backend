@@ -1,4 +1,4 @@
-import {Logger, Module} from '@nestjs/common';
+import {forwardRef, Logger, Module} from '@nestjs/common';
 import {DbModule} from '@db/db.module';
 import {UserModule} from '@app/user/user.module';
 import {AuthController} from '@app/auth/auth.controller';
@@ -14,20 +14,22 @@ import {PassportModule} from '@nestjs/passport';
   imports: [
     DbModule,
     PassportModule,
-    JwtModule.registerAsync({
-      imports: [AppConfigModule],
-      inject: [jwtConfig.KEY],
-      useFactory: (config: ConfigType<typeof jwtConfig>) => {
-        return {
-          secret: config.accessTokenSecret,
-          signOptions: {
-            algorithm: config.accessTokenAlgorithm,
-            issuer: config.issuer,
-            expiresIn: config.accessTokenExpire,
-          },
-        };
-      },
-    }),
+    forwardRef(() =>
+      JwtModule.registerAsync({
+        imports: [AppConfigModule],
+        inject: [jwtConfig.KEY],
+        useFactory: (config: ConfigType<typeof jwtConfig>) => {
+          return {
+            secret: config.accessTokenSecret,
+            signOptions: {
+              algorithm: config.accessTokenAlgorithm,
+              issuer: config.issuer,
+              expiresIn: config.accessTokenExpire,
+            },
+          };
+        },
+      })
+    ),
     UserModule,
   ],
   controllers: [AuthController],
