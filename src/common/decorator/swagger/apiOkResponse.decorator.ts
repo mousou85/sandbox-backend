@@ -14,6 +14,8 @@ export const ApiOkResponse = <T extends Type>(options?: {
   description?: string;
   model?: T | T[];
 }): MethodDecorator => {
+  const {description, model} = options;
+
   //set vars: 적용할 데코레이터 목록
   const decoratorList = [];
   decoratorList.push(ApiExtraModels(OkResponseDto));
@@ -22,25 +24,28 @@ export const ApiOkResponse = <T extends Type>(options?: {
   let apiOptions: ApiResponseOptions = {
     schema: {
       allOf: [{$ref: getSchemaPath(OkResponseDto)}],
-      oneOf: [],
+      properties: {
+        data: {},
+      },
     },
   };
-  if (options?.description) {
-    apiOptions.description = options.description;
+
+  if (description) {
+    apiOptions.description = description;
   }
-  if (options?.model) {
-    if (Array.isArray(options.model)) {
-      for (const model of options.model) {
-        decoratorList.push(ApiExtraModels(model));
-        apiOptions.schema.oneOf.push({
-          properties: {data: {$ref: getSchemaPath(model)}},
-        });
+  if (model) {
+    if (Array.isArray(model)) {
+      apiOptions.schema.properties.data['oneOf'] = [];
+
+      for (const item of model) {
+        decoratorList.push(ApiExtraModels(item));
+        apiOptions.schema.properties.data['oneOf'].push({$ref: getSchemaPath(item)});
       }
     } else {
-      decoratorList.push(ApiExtraModels(options.model));
-      apiOptions.schema.allOf.push({
-        properties: {data: {$ref: getSchemaPath(options.model)}},
-      });
+      apiOptions.schema.properties.data['allOf'] = [];
+
+      decoratorList.push(ApiExtraModels(model));
+      apiOptions.schema.properties.data['allOf'].push({$ref: getSchemaPath(model)});
     }
   }
 
