@@ -13,3 +13,10 @@ export class UserCredentialDto {
   @IsNotEmpty()
   password: string;
 }
+
+export class UserOtpCredentialDto extends UserCredentialDto {
+  @ApiProperty({description: 'otp token'})
+  @Transform(({value}) => DtoTransform.trim(value))
+  @IsNotEmpty()
+  token: string;
+}

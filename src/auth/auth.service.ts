@@ -7,6 +7,7 @@ import {JwtService} from '@nestjs/jwt';
 import {jwtConfig as jwtConfigBase} from '@config';
 import {ConfigType} from '@nestjs/config';
 import {TokenExpiredError} from 'jsonwebtoken';
+import * as speakeasy from 'speakeasy';
 
 @Injectable()
 export class AuthService {
@@ -29,7 +30,10 @@ export class AuthService {
     }
 
     //set vars: user entity
-    const userEntity = await this.userRepository.findOneBy({id});
+    const userEntity = await this.userRepository.findByCondition(
+      {id},
+      {passwordSalt: true, otp: true}
+    );
     if (!userEntity) {
       throw new UserNotFoundException();
     }
@@ -39,7 +43,7 @@ export class AuthService {
     }
 
     //비밀번호 확인
-    const passwordSalt = await this.userRepository.getPasswordSalt(userEntity.user_idx);
+    const passwordSalt = userEntity.userPasswordSalt.salt;
     if (!this.userService.verifyPassword(password, passwordSalt, userEntity.password)) {
       await this.userRepository.increaseLoginFailCount(userEntity.user_idx);
 
@@ -59,7 +63,10 @@ export class AuthService {
    */
   async validateUserByUid(uid: string): Promise<UserEntity> {
     //set vars: user entity
-    const userEntity = await this.userRepository.findOneBy({uid});
+    const userEntity = await this.userRepository.findByCondition(
+      {uid},
+      {passwordSalt: true, otp: true}
+    );
     if (!userEntity) {
       throw new UserNotFoundException();
     }
@@ -124,5 +131,19 @@ export class AuthService {
     } catch (err) {
       throw new UnauthorizedException(err instanceof TokenExpiredError ? 'Token Expired' : err);
     }
+  }
+
+  /**
+   * OTP 토큰 검증
+   * @param token
+   * @param secret
+   */
+  verifyOtpToken(token, secret): boolean {
+    return speakeasy.totp.verify({
+      secret,
+      token,
+      digits: 6,
+      encoding: 'base32',
+    });
   }
 }

@@ -1,6 +1,7 @@
-import {BaseEntity, Column, Entity, Index, PrimaryGeneratedColumn, Unique} from 'typeorm';
+import {BaseEntity, Column, Entity, Index, OneToOne, PrimaryGeneratedColumn, Unique} from 'typeorm';
 import {EYNState} from '@db/db.enum';
 import {DateTransformer} from '@db/transformer';
+import {UserOtpEntity, UserPasswordSaltEntity} from '@db/entity';
 
 @Entity('users')
 @Unique('UNIQ_UID', ['uid'])
@@ -77,4 +78,13 @@ export class UserEntity extends BaseEntity {
     default: EYNState.n,
   })
   use_otp: EYNState;
+
+  /**
+   * relations
+   */
+  @OneToOne(() => UserPasswordSaltEntity, (data) => data.user)
+  userPasswordSalt: UserPasswordSaltEntity;
+
+  @OneToOne(() => UserOtpEntity, (data) => data.user)
+  userOtp: UserOtpEntity;
 }

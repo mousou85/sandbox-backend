@@ -7,16 +7,16 @@ export abstract class BaseRepository<Entity extends BaseEntity> extends Reposito
    * 커스텀된 select query builder 반환
    * @param joinOption join 옵션
    */
-  abstract getCustomQueryBuilder(joinOption?: Record<string, boolean>): SelectQueryBuilder<Entity>;
+  abstract getCustomQueryBuilder<JoinType>(joinOption?: JoinType): SelectQueryBuilder<Entity>;
 
   /**
    * select query builder에 조건 설정
    * @param queryBuilder select query builder
    * @param condition 조건
    */
-  abstract setQueryBuilderCondition(
+  abstract setQueryBuilderCondition<CondType>(
     queryBuilder: SelectQueryBuilder<Entity>,
-    condition: Record<string, any>
+    condition: CondType
   ): SelectQueryBuilder<Entity>;
 
   /**
@@ -24,9 +24,9 @@ export abstract class BaseRepository<Entity extends BaseEntity> extends Reposito
    * - 커스텀된 select query builder 사용
    * @param condition 조건
    */
-  async existsBy(condition: Record<string, any>): Promise<boolean> {
+  async existsBy<CondType>(condition: CondType): Promise<boolean> {
     let queryBuilder = this.getCustomQueryBuilder();
-    queryBuilder = this.setQueryBuilderCondition(queryBuilder, condition);
+    queryBuilder = this.setQueryBuilderCondition<CondType>(queryBuilder, condition);
     return !!(await queryBuilder.getCount());
   }
 
@@ -36,12 +36,12 @@ export abstract class BaseRepository<Entity extends BaseEntity> extends Reposito
    * @param condition 조건
    * @param joinOption join 옵션
    */
-  async findByCondition(
-    condition: Record<string, any>,
-    joinOption?: Record<string, boolean>
+  async findByCondition<CondType, JoinType>(
+    condition: CondType,
+    joinOption?: JoinType
   ): Promise<Entity | null> {
-    let queryBuilder = this.getCustomQueryBuilder(joinOption);
-    queryBuilder = this.setQueryBuilderCondition(queryBuilder, condition);
+    let queryBuilder = this.getCustomQueryBuilder<JoinType>(joinOption);
+    queryBuilder = this.setQueryBuilderCondition<CondType>(queryBuilder, condition);
     return queryBuilder.getOne();
   }
 
@@ -52,18 +52,18 @@ export abstract class BaseRepository<Entity extends BaseEntity> extends Reposito
    * @param listOption list 옵션
    * @param joinOption join 옵션
    */
-  async findAllByCondition(
-    condition: Record<string, any>,
+  async findAllByCondition<CondType, JoinType>(
+    condition: CondType,
     listOption?: IQueryListOption,
-    joinOption?: Record<string, boolean>
+    joinOption?: JoinType
   ): Promise<IFindAllResult<Entity>> {
     const page = listOption?.page || 1;
     const pageSize = listOption?.pageSize || 20;
     const sort = listOption?.sort ?? null;
     const getAll = listOption?.getAll ?? false;
 
-    let queryBuilder = this.getCustomQueryBuilder(joinOption);
-    queryBuilder = this.setQueryBuilderCondition(queryBuilder, condition);
+    let queryBuilder = this.getCustomQueryBuilder<JoinType>(joinOption);
+    queryBuilder = this.setQueryBuilderCondition<CondType>(queryBuilder, condition);
 
     if (sort) {
       Array.isArray(sort)

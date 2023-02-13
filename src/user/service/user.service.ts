@@ -1,10 +1,14 @@
 import {Injectable} from '@nestjs/common';
-import {UserRepository} from '@db/repository';
+import {UserLoginLogRepository, UserRepository} from '@db/repository';
 import * as crypto from 'crypto';
+import {EUserLoginLogType} from '@db/entity';
 
 @Injectable()
 export class UserService {
-  constructor(protected userRepository: UserRepository) {}
+  constructor(
+    protected userRepository: UserRepository,
+    protected loginLogRepository: UserLoginLogRepository
+  ) {}
 
   /**
    * 비밀번호 해싱
@@ -31,5 +35,23 @@ export class UserService {
     const hash = crypto.pbkdf2Sync(password, salt, 2280, 128, 'sha512');
     const hashedPassword = hash.toString('base64');
     return hashedPassword == hashedUserPassword;
+  }
+
+  /**
+   * 로그인 로그 insert
+   * @param userIdx
+   * @param logType
+   * @param ip
+   * @param userAgent
+   * @param createdAt
+   */
+  async insertLoginLog(
+    userIdx: number,
+    logType: EUserLoginLogType,
+    ip?: string,
+    userAgent?: string,
+    createdAt?: string
+  ): Promise<void> {
+    return this.loginLogRepository.insertLog(userIdx, logType, ip, userAgent, createdAt);
   }
 }

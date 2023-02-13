@@ -1,6 +1,6 @@
 import {Injectable} from '@nestjs/common';
 import {Repository, SelectQueryBuilder} from 'typeorm';
-import {UserEntity, UserPasswordSaltEntity} from '@db/entity';
+import {UserEntity, UserOtpEntity, UserPasswordSaltEntity} from '@db/entity';
 import {InjectRepository} from '@nestjs/typeorm';
 import {BaseRepository} from '@db/repository/base.repository';
 import {EYNState} from '@db/db.enum';
@@ -8,10 +8,16 @@ import {IFindAllResult, IQueryListOption} from '@db/db.interface';
 
 export interface IUserCondition {
   user_idx?: number;
+  uid?: string;
   id?: string;
   name?: string;
   created_at?: {begin: string; end: string};
   use_otp?: EYNState;
+}
+
+export interface IUserJoinOption {
+  passwordSalt?: boolean;
+  otp?: boolean;
 }
 
 @Injectable()
@@ -20,13 +26,23 @@ export class UserRepository extends BaseRepository<UserEntity> {
     @InjectRepository(UserEntity)
     protected repository: Repository<UserEntity>,
     @InjectRepository(UserPasswordSaltEntity)
-    protected userPasswordSaltRepository: Repository<UserPasswordSaltEntity>
+    protected userPasswordSaltRepository: Repository<UserPasswordSaltEntity>,
+    @InjectRepository(UserOtpEntity)
+    protected userOtpRepository: Repository<UserOtpEntity>
   ) {
     super(repository.target, repository.manager, repository.queryRunner);
   }
 
-  getCustomQueryBuilder() {
-    return this.repository.createQueryBuilder('user');
+  getCustomQueryBuilder(joinOption?: IUserJoinOption) {
+    const builder = this.repository.createQueryBuilder('user');
+    if (joinOption?.passwordSalt) {
+      builder.innerJoinAndSelect('user.userPasswordSalt', 'passwordSalt');
+    }
+    if (joinOption?.otp) {
+      builder.leftJoinAndSelect('user.userOtp', 'otp');
+    }
+
+    return builder;
   }
 
   setQueryBuilderCondition(
@@ -35,6 +51,9 @@ export class UserRepository extends BaseRepository<UserEntity> {
   ) {
     if (condition.user_idx) {
       queryBuilder.andWhere('user.user_idx = :user_idx', {user_idx: condition.user_idx});
+    }
+    if (condition.uid) {
+      queryBuilder.andWhere('user.uid = :uid', {uid: condition.uid});
     }
     if (condition.id) {
       queryBuilder.andWhere('user.id = :id', {id: condition.id.trim()});
@@ -58,15 +77,19 @@ export class UserRepository extends BaseRepository<UserEntity> {
     return queryBuilder;
   }
 
-  async findByCondition(condition: IUserCondition): Promise<UserEntity | null> {
-    return super.findByCondition(condition);
+  async findByCondition(
+    condition: IUserCondition,
+    joinOption?: IUserJoinOption
+  ): Promise<UserEntity | null> {
+    return super.findByCondition(condition, joinOption);
   }
 
   async findAllByCondition(
     condition: IUserCondition,
-    listOption?: IQueryListOption
+    listOption?: IQueryListOption,
+    joinOption?: IUserJoinOption
   ): Promise<IFindAllResult<UserEntity>> {
-    return super.findAllByCondition(condition, listOption);
+    return super.findAllByCondition(condition, listOption, joinOption);
   }
 
   /**
@@ -76,6 +99,15 @@ export class UserRepository extends BaseRepository<UserEntity> {
   async getPasswordSalt(userIdx: number): Promise<string | null> {
     const result = await this.userPasswordSaltRepository.findOneBy({user_idx: userIdx});
     return result ? result.salt : null;
+  }
+
+  /**
+   * otp secret 반환
+   * @param userIdx
+   */
+  async getOtpSecret(userIdx: number): Promise<string | null> {
+    const result = await this.userOtpRepository.findOneBy({user_idx: userIdx});
+    return result ? result.secret : null;
   }
 
   /**
