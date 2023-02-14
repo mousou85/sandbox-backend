@@ -1,3 +1,3 @@
 export * from './userCredential.dto';
-export * from './loginResponse.dto';
-export * from './reissueTokenResponse.dto';
+export * from './login.dto';
+export * from './reissueToken.dto';

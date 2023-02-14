@@ -1,5 +1,5 @@
 import {Injectable} from '@nestjs/common';
-import {Repository, SelectQueryBuilder} from 'typeorm';
+import {EntityManager, Repository, SelectQueryBuilder} from 'typeorm';
 import {UserEntity, UserOtpEntity, UserPasswordSaltEntity} from '@db/entity';
 import {InjectRepository} from '@nestjs/typeorm';
 import {BaseRepository} from '@db/repository/base.repository';
@@ -77,6 +77,10 @@ export class UserRepository extends BaseRepository<UserEntity> {
     return queryBuilder;
   }
 
+  async existsBy(condition: IUserCondition): Promise<boolean> {
+    return super.existsBy(condition);
+  }
+
   async findByCondition(
     condition: IUserCondition,
     joinOption?: IUserJoinOption
@@ -99,6 +103,31 @@ export class UserRepository extends BaseRepository<UserEntity> {
   async getPasswordSalt(userIdx: number): Promise<string | null> {
     const result = await this.userPasswordSaltRepository.findOneBy({user_idx: userIdx});
     return result ? result.salt : null;
+  }
+
+  /**
+   * password salt 저장/수정
+   * @param userIdx 유저IDX
+   * @param salt password salt
+   * @param entityManager 트랜잭션 사용하는 경우 queryRunner.manager 객체
+   */
+  async setPasswordSalt(
+    userIdx: number,
+    salt: string,
+    entityManager: EntityManager
+  ): Promise<void> {
+    let entity = await this.userPasswordSaltRepository.findOneBy({user_idx: userIdx});
+    if (!entity) {
+      entity = this.userPasswordSaltRepository.create();
+      entity.user_idx = userIdx;
+    }
+    entity.salt = salt;
+
+    if (entityManager) {
+      await entityManager.save(entity, {reload: false});
+    } else {
+      await this.userPasswordSaltRepository.save(entity, {reload: false});
+    }
   }
 
   /**

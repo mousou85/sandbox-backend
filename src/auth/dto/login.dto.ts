@@ -1,6 +1,6 @@
 import {ApiProperty} from '@nestjs/swagger';
 import {Expose, Transform} from 'class-transformer';
-import {IsBoolean, IsNotEmpty} from 'class-validator';
+import {IsBoolean, IsNotEmpty, MaxLength} from 'class-validator';
 import {IsEnum, IsInt} from '@common/decorator/validate';
 import {DtoTransform} from '@common/dto.transform';
 import {DefaultDto} from '@common/dto';
@@ -25,11 +25,13 @@ export class LoginSuccessDto extends DefaultDto<any> {
 
   @ApiProperty({description: 'user id', required: true})
   @Expose()
+  @MaxLength(100)
   @IsNotEmpty()
   id: string;
 
   @ApiProperty({description: 'user name', required: true})
   @Expose()
+  @MaxLength(50)
   @IsNotEmpty()
   name: string;
 

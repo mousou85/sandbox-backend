@@ -1,11 +1,15 @@
 import {Injectable} from '@nestjs/common';
 import {UserLoginLogRepository, UserRepository} from '@db/repository';
 import * as crypto from 'crypto';
-import {EUserLoginLogType} from '@db/entity';
+import {EUserLoginLogType, UserEntity} from '@db/entity';
+import {DataNotFoundException} from '@common/exception';
+import {DataSource} from 'typeorm';
+import {EditUserInfoDto} from '@app/user/dto';
 
 @Injectable()
 export class UserService {
   constructor(
+    protected dataSource: DataSource,
     protected userRepository: UserRepository,
     protected loginLogRepository: UserLoginLogRepository
   ) {}
@@ -35,6 +39,86 @@ export class UserService {
     const hash = crypto.pbkdf2Sync(password, salt, 2280, 128, 'sha512');
     const hashedPassword = hash.toString('base64');
     return hashedPassword == hashedUserPassword;
+  }
+
+  /**
+   * 유저IDX로 비밀번호 비교
+   * @param password 패스워드
+   * @param userIdx 유저IDX
+   */
+  async verifyPasswordByIdx(password: string, userIdx: number): Promise<boolean> {
+    const userEntity = await this.userRepository.findByCondition(
+      {user_idx: userIdx},
+      {passwordSalt: true}
+    );
+    if (!userEntity) throw new DataNotFoundException('user data not found');
+
+    return this.verifyPassword(password, userEntity.userPasswordSalt.salt, userEntity.password);
+  }
+
+  /**
+   * 패스워드 변경
+   * @param userIdx
+   * @param newPassword
+   */
+  async changePassword(userIdx: number, newPassword: string): Promise<boolean> {
+    //set vars: 유저 데이터
+    const userEntity = await this.userRepository.findByCondition({user_idx: userIdx});
+    if (!userEntity) {
+      throw new DataNotFoundException('user data not found');
+    }
+
+    //set vars: 새 비밀번호 암호화
+    const {hashedPassword, salt} = this.encryptPassword(newPassword);
+
+    //트랜잭션 처리
+    let retVal = false;
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+    try {
+      const entityManager = queryRunner.manager;
+
+      //password salt 업데이트
+      await this.userRepository.setPasswordSalt(userIdx, salt, entityManager);
+
+      //패스워드 업데이트
+      userEntity.password = hashedPassword;
+      await entityManager.save(userEntity);
+
+      await queryRunner.commitTransaction();
+
+      retVal = true;
+    } catch (err) {
+      await queryRunner.rollbackTransaction();
+
+      retVal = false;
+    } finally {
+      await queryRunner.release();
+    }
+
+    return retVal;
+  }
+
+  /**
+   * 유저 데이터 수정
+   * @param userIdx
+   * @param editDto 수정할 데이터(속성중 password 관련은 changePassword()로 변경해야함)
+   */
+  async editInfo(userIdx: number, editDto: EditUserInfoDto): Promise<UserEntity> {
+    //set vars: 유저 데이터
+    const userEntity = await this.userRepository.findByCondition({user_idx: userIdx});
+    if (!userEntity) {
+      throw new DataNotFoundException('user data not found');
+    }
+
+    //업데이트
+    const {name} = editDto;
+    if (name) userEntity.name = name;
+
+    await this.userRepository.save(userEntity);
+
+    return userEntity;
   }
 
   /**

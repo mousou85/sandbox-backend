@@ -1,7 +1,6 @@
 import {
   Body,
   Controller,
-  Get,
   HttpCode,
   Inject,
   Logger,
@@ -11,12 +10,12 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import {AuthService} from '@app/auth/auth.service';
-import {JwtAuthGuard, LocalAuthGuard} from '@app/auth/authGuard';
+import {LocalAuthGuard} from '@app/auth/authGuard';
 import {User} from '@app/auth/auth.decorator';
 import {
   LoginSuccessDto,
   NeedOtpVerifyDto,
-  ReissueTokenResponseDto,
+  ReissueTokenDto,
   UserCredentialDto,
   UserOtpCredentialDto,
 } from '@app/auth/dto';
@@ -105,12 +104,12 @@ export class AuthController {
 
   @ApiOperation({summary: '액세스 토큰 재발급'})
   @ApiCustomBody({refreshToken: {type: 'string', description: '리프레시 토큰'}}, ['refreshToken'])
-  @ApiOkResponse({model: ReissueTokenResponseDto})
+  @ApiOkResponse({model: ReissueTokenDto})
   @Post('/reissue-token')
   @HttpCode(200)
   async reissueToken(
     @Body('refreshToken', new RequiredPipe()) refreshToken: string
-  ): Promise<OkResponseDto<ReissueTokenResponseDto>> {
+  ): Promise<OkResponseDto<ReissueTokenDto>> {
     //리프레시 토큰 검증
     const payload = this.authService.verifyRefreshToken(refreshToken);
     if (!payload || !payload.uid) {
@@ -121,13 +120,9 @@ export class AuthController {
     const userEntity = await this.authService.validateUserByUid(payload.uid);
     const accessToken = this.authService.createAccessToken(userEntity);
 
-    const responseDto = new ReissueTokenResponseDto();
+    const responseDto = new ReissueTokenDto();
     responseDto.accessToken = accessToken;
 
     return new OkResponseDto(responseDto);
   }
-
-  @UseGuards(JwtAuthGuard)
-  @Get('/test')
-  async test(@User() user: UserEntity) {}
 }
