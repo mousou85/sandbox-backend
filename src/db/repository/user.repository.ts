@@ -24,11 +24,11 @@ export interface IUserJoinOption {
 export class UserRepository extends BaseRepository<UserEntity> {
   constructor(
     @InjectRepository(UserEntity)
-    protected repository: Repository<UserEntity>,
+    protected readonly repository: Repository<UserEntity>,
     @InjectRepository(UserPasswordSaltEntity)
-    protected userPasswordSaltRepository: Repository<UserPasswordSaltEntity>,
+    protected readonly userPasswordSaltRepository: Repository<UserPasswordSaltEntity>,
     @InjectRepository(UserOtpEntity)
-    protected userOtpRepository: Repository<UserOtpEntity>
+    protected readonly userOtpRepository: Repository<UserOtpEntity>
   ) {
     super(repository.target, repository.manager, repository.queryRunner);
   }
@@ -100,9 +100,9 @@ export class UserRepository extends BaseRepository<UserEntity> {
    * password salt 반환
    * @param userIdx
    */
-  async getPasswordSalt(userIdx: number): Promise<string | null> {
+  async getPasswordSalt(userIdx: number): Promise<UserPasswordSaltEntity | null> {
     const result = await this.userPasswordSaltRepository.findOneBy({user_idx: userIdx});
-    return result ? result.salt : null;
+    return result ? result : null;
   }
 
   /**
@@ -134,9 +134,9 @@ export class UserRepository extends BaseRepository<UserEntity> {
    * otp secret 반환
    * @param userIdx
    */
-  async getOtpSecret(userIdx: number): Promise<string | null> {
+  async getOtpSecret(userIdx: number): Promise<UserOtpEntity | null> {
     const result = await this.userOtpRepository.findOneBy({user_idx: userIdx});
-    return result ? result.secret : null;
+    return result ? result : null;
   }
 
   /**

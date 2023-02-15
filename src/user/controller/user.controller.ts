@@ -2,6 +2,7 @@ import {
   BadRequestException,
   Body,
   Controller,
+  Delete,
   Get,
   HttpCode,
   Inject,
@@ -18,9 +19,10 @@ import {JwtAuthGuard} from '@app/auth/authGuard';
 import {User} from '@app/auth/auth.decorator';
 import {EditUserInfoDto, RegisterOtpDto, ResponseRegisterOtpDto, UserInfoDto} from '@app/user/dto';
 import {OkResponseDto} from '@common/dto';
-import {ApiOkResponse} from '@common/decorator/swagger';
+import {ApiCustomBody, ApiOkResponse} from '@common/decorator/swagger';
 import {AuthUserDto} from '@app/auth/dto';
 import {UserRepository} from '@db/repository';
+import {RequiredPipe} from '@common/pipe';
 
 @ApiTags('사용자')
 @ApiBearerAuth()
@@ -64,9 +66,7 @@ export class UserController {
       }
 
       //비밀번호 수정
-      if (!(await this.userService.changePassword(user.userIdx, editDto.newPassword))) {
-        throw new BadRequestException('password change failed');
-      }
+      await this.userService.changePassword(user.userIdx, editDto.newPassword);
     }
 
     //유저 정보 변경
@@ -122,6 +122,30 @@ export class UserController {
 
     //OTP secret 저장
     await this.userService.upsertOtpSecret(user.userIdx, otpSecret);
+
+    return new OkResponseDto();
+  }
+
+  @ApiOperation({summary: '등록된 OTP 해제'})
+  @ApiCustomBody({otpToken: {description: 'OTP 토큰'}}, ['otpToken'])
+  @ApiOkResponse({model: null})
+  @Delete('/otp')
+  async unregisterOtp(
+    @User() user: AuthUserDto,
+    @Body('otpToken', new RequiredPipe()) otpToken: string
+  ): Promise<OkResponseDto<null>> {
+    //OTP 사용 여부 확인
+    if (user.useOtp != 'y') {
+      throw new BadRequestException('You are not using OTP');
+    }
+
+    //OTP 토큰 검증
+    if (!this.authService.verifyOtpToken(otpToken, user.otpSecret)) {
+      throw new BadRequestException('Invalid OTP token');
+    }
+
+    //OTP secret 삭제
+    await this.userService.deleteOtpSecret(user.userIdx);
 
     return new OkResponseDto();
   }

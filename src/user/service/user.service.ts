@@ -63,7 +63,7 @@ export class UserService {
    * @param userIdx
    * @param newPassword
    */
-  async changePassword(userIdx: number, newPassword: string): Promise<boolean> {
+  async changePassword(userIdx: number, newPassword: string): Promise<void> {
     //set vars: 유저 데이터
     const userEntity = await this.userRepository.findByCondition({user_idx: userIdx});
     if (!userEntity) {
@@ -74,7 +74,6 @@ export class UserService {
     const {hashedPassword, salt} = this.encryptPassword(newPassword);
 
     //트랜잭션 처리
-    let retVal = false;
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
     await queryRunner.startTransaction();
@@ -89,17 +88,12 @@ export class UserService {
       await entityManager.save(userEntity, {reload: false});
 
       await queryRunner.commitTransaction();
-
-      retVal = true;
     } catch (err) {
       await queryRunner.rollbackTransaction();
-
-      retVal = false;
+      throw err;
     } finally {
       await queryRunner.release();
     }
-
-    return retVal;
   }
 
   /**
@@ -145,7 +139,7 @@ export class UserService {
    * @param userIdx
    * @param otpSecret
    */
-  async upsertOtpSecret(userIdx: number, otpSecret: string): Promise<boolean> {
+  async upsertOtpSecret(userIdx: number, otpSecret: string): Promise<void> {
     //set vars: 유저 데이터
     const userEntity = await this.userRepository.findByCondition({user_idx: userIdx});
     if (!userEntity) {
@@ -153,7 +147,6 @@ export class UserService {
     }
 
     //트랜잭션 처리
-    let retVal = false;
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
     await queryRunner.startTransaction();
@@ -168,17 +161,52 @@ export class UserService {
       await entityManager.save(userEntity, {reload: false});
 
       await queryRunner.commitTransaction();
-
-      retVal = true;
     } catch (err) {
       await queryRunner.rollbackTransaction();
-
-      retVal = false;
+      throw err;
     } finally {
       await queryRunner.release();
     }
+  }
 
-    return retVal;
+  /**
+   * OTP secret 삭제
+   * @param userIdx
+   */
+  async deleteOtpSecret(userIdx: number): Promise<void> {
+    //set vars: 유저 데이터
+    const userEntity = await this.userRepository.findByCondition({user_idx: userIdx});
+    if (!userEntity) {
+      throw new DataNotFoundException('user data not found');
+    }
+
+    //set vars: OTP secret 데이터
+    const otpEntity = await this.userRepository.getOtpSecret(userIdx);
+    if (!otpEntity) {
+      throw new DataNotFoundException('user otp data not found');
+    }
+
+    //트랜잭션 처리
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+    try {
+      const entityManager = queryRunner.manager;
+
+      //otp 데이터 삭제
+      await entityManager.remove(otpEntity);
+
+      //OTP 사용 여부 갱신
+      userEntity.use_otp = 'n';
+      await entityManager.save(userEntity, {reload: false});
+
+      await queryRunner.commitTransaction();
+    } catch (err) {
+      await queryRunner.rollbackTransaction();
+      throw err;
+    } finally {
+      await queryRunner.release();
+    }
   }
 
   /**
