@@ -6,7 +6,7 @@ export const swaggerConfig = [
     title: 'sandbox api - 공통',
     description: 'sandbox 공통 api',
     version: '0.1',
-    urlPrefix: 'api-doc/common',
+    urlPrefix: 'api-doc',
     includeModules: [AuthModule, UserModule],
   },
 ];

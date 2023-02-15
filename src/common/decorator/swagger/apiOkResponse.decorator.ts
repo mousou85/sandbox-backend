@@ -20,33 +20,35 @@ export const ApiOkResponse = <T extends Type>(options?: {
   const decoratorList = [];
   decoratorList.push(ApiExtraModels(OkResponseDto));
 
-  //ApiOkResponse 데코레이터 옵션
+  //set vars: ApiOkResponse 데코레이터 옵션
   let apiOptions: ApiResponseOptions = {
     schema: {
       allOf: [{$ref: getSchemaPath(OkResponseDto)}],
-      properties: {
-        data: {},
-      },
     },
   };
 
-  if (description) {
-    apiOptions.description = description;
-  }
+  //설명 추가
+  if (description) apiOptions.description = description;
+
+  //response 데이터중 data 속성 정의
   if (model) {
+    let schemaProperties = {data: {}};
+
     if (Array.isArray(model)) {
-      apiOptions.schema.properties.data['oneOf'] = [];
+      schemaProperties.data['oneOf'] = [];
 
       for (const item of model) {
         decoratorList.push(ApiExtraModels(item));
-        apiOptions.schema.properties.data['oneOf'].push({$ref: getSchemaPath(item)});
+        schemaProperties.data['oneOf'].push({$ref: getSchemaPath(item)});
       }
     } else {
-      apiOptions.schema.properties.data['allOf'] = [];
+      schemaProperties.data['allOf'] = [];
 
       decoratorList.push(ApiExtraModels(model));
-      apiOptions.schema.properties.data['allOf'].push({$ref: getSchemaPath(model)});
+      schemaProperties.data['allOf'].push({$ref: getSchemaPath(model)});
     }
+
+    apiOptions.schema['properties'] = schemaProperties;
   }
 
   decoratorList.push(ApiOkResponseDefault(apiOptions));

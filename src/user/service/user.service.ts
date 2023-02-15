@@ -5,6 +5,8 @@ import {EUserLoginLogType, UserEntity} from '@db/entity';
 import {DataNotFoundException} from '@common/exception';
 import {DataSource} from 'typeorm';
 import {EditUserInfoDto} from '@app/user/dto';
+import * as speakeasy from 'speakeasy';
+import * as qrcode from 'qrcode';
 
 @Injectable()
 export class UserService {
@@ -84,7 +86,86 @@ export class UserService {
 
       //패스워드 업데이트
       userEntity.password = hashedPassword;
-      await entityManager.save(userEntity);
+      await entityManager.save(userEntity, {reload: false});
+
+      await queryRunner.commitTransaction();
+
+      retVal = true;
+    } catch (err) {
+      await queryRunner.rollbackTransaction();
+
+      retVal = false;
+    } finally {
+      await queryRunner.release();
+    }
+
+    return retVal;
+  }
+
+  /**
+   * OTP 등록 여부
+   * @param userIdx
+   */
+  async hasOtpSecret(userIdx: number): Promise<boolean> {
+    return !!(await this.userRepository.getOtpSecret(userIdx));
+  }
+
+  /**
+   * OTP secret 생성
+   * @param userEntity
+   */
+  async createOtpSecret(
+    userEntity: UserEntity
+  ): Promise<{secret: string; authUrl: string; qrCodeImage: string}> {
+    const otpSecret = speakeasy.generateSecret({
+      length: 32,
+      name: 'sand box',
+    });
+
+    const authUrl = speakeasy.otpauthURL({
+      secret: otpSecret.base32,
+      issuer: 'sand box',
+      label: userEntity.id,
+      period: 30,
+      digits: 6,
+      encoding: 'base32',
+    });
+
+    const qrCodeImage = await qrcode.toDataURL(authUrl);
+
+    return {
+      secret: otpSecret.base32,
+      authUrl: authUrl,
+      qrCodeImage: qrCodeImage,
+    };
+  }
+
+  /**
+   * OTP secret 저장/수정
+   * @param userIdx
+   * @param otpSecret
+   */
+  async upsertOtpSecret(userIdx: number, otpSecret: string): Promise<boolean> {
+    //set vars: 유저 데이터
+    const userEntity = await this.userRepository.findByCondition({user_idx: userIdx});
+    if (!userEntity) {
+      throw new DataNotFoundException('user data not found');
+    }
+
+    //트랜잭션 처리
+    let retVal = false;
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+    try {
+      const entityManager = queryRunner.manager;
+
+      //otp secret 저장/수정
+      await this.userRepository.setOtpSecret(userIdx, otpSecret, entityManager);
+
+      //OTP 사용 여부 갱신
+      userEntity.use_otp = 'y';
+      await entityManager.save(userEntity, {reload: false});
 
       await queryRunner.commitTransaction();
 

@@ -13,6 +13,7 @@ import {AuthService} from '@app/auth/auth.service';
 import {LocalAuthGuard} from '@app/auth/authGuard';
 import {User} from '@app/auth/auth.decorator';
 import {
+  AuthUserDto,
   LoginSuccessDto,
   NeedOtpVerifyDto,
   ReissueTokenDto,
@@ -20,7 +21,6 @@ import {
   UserOtpCredentialDto,
 } from '@app/auth/dto';
 import {OkResponseDto} from '@common/dto';
-import {UserEntity} from '@db/entity';
 import {ApiBody, ApiOperation, ApiTags} from '@nestjs/swagger';
 import {ApiCustomBody, ApiOkResponse} from '@common/decorator/swagger';
 import {RequiredPipe} from '@common/pipe';
@@ -45,12 +45,12 @@ export class AuthController {
   @Post('/login')
   @HttpCode(200)
   async login(
-    @User() user: UserEntity
+    @User() user: AuthUserDto
   ): Promise<OkResponseDto<LoginSuccessDto | NeedOtpVerifyDto>> {
     let responseDto: LoginSuccessDto | NeedOtpVerifyDto;
 
     //otp 사용 여부에 따라 response dto 다름
-    if (user.use_otp == 'y') {
+    if (user.useOtp == 'y') {
       responseDto = new NeedOtpVerifyDto();
       responseDto.needOTPVerify = true;
     } else {

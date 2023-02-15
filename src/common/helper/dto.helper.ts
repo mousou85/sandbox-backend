@@ -1,4 +1,9 @@
-import {instanceToPlain, plainToClassFromExist, plainToInstance} from 'class-transformer';
+import {
+  ClassTransformOptions,
+  instanceToPlain,
+  plainToClassFromExist,
+  plainToInstance,
+} from 'class-transformer';
 
 /**
  * DTO 헬퍼
@@ -38,13 +43,16 @@ export class DtoHelper {
   static transformForDto<T>(
     obj: any,
     dtoCls: new () => T,
-    opts: {keyToCamelCase: boolean} = {keyToCamelCase: true}
+    opts: {keyToCamelCase: boolean} & ClassTransformOptions = {
+      keyToCamelCase: true,
+      excludeExtraneousValues: true,
+    }
   ): T {
     let plain = instanceToPlain(obj);
     if (opts?.keyToCamelCase) {
       plain = this.keyToCamelCase(plain);
     }
-    return plainToInstance(dtoCls, plain, {excludeExtraneousValues: true});
+    return plainToInstance(dtoCls, plain, opts);
   }
 
   /**
@@ -57,12 +65,16 @@ export class DtoHelper {
   static transformForExistsDto<T>(
     obj: any,
     dtoInstance: T,
-    opts: {keyToCamelCase: boolean} = {keyToCamelCase: true}
+    opts: {keyToCamelCase: boolean} & ClassTransformOptions = {
+      keyToCamelCase: true,
+      excludeExtraneousValues: true,
+    }
   ) {
     let plain = instanceToPlain(obj);
     if (opts?.keyToCamelCase) {
       plain = this.keyToCamelCase(plain);
     }
-    plainToClassFromExist(dtoInstance, plain, {excludeExtraneousValues: true});
+
+    plainToClassFromExist(dtoInstance, plain, opts);
   }
 }

@@ -3,21 +3,24 @@ import {
   Body,
   Controller,
   Get,
+  HttpCode,
   Inject,
   Logger,
   LoggerService,
   Patch,
+  Post,
   UseGuards,
 } from '@nestjs/common';
-import {ApiBearerAuth, ApiOperation, ApiTags} from '@nestjs/swagger';
+import {ApiBearerAuth, ApiBody, ApiOperation, ApiTags} from '@nestjs/swagger';
 import {AuthService} from '@app/auth/auth.service';
 import {UserService} from '@app/user/service';
 import {JwtAuthGuard} from '@app/auth/authGuard';
 import {User} from '@app/auth/auth.decorator';
-import {UserEntity} from '@db/entity';
-import {EditUserInfoDto, UserInfoDto} from '@app/user/dto';
+import {EditUserInfoDto, RegisterOtpDto, ResponseRegisterOtpDto, UserInfoDto} from '@app/user/dto';
 import {OkResponseDto} from '@common/dto';
 import {ApiOkResponse} from '@common/decorator/swagger';
+import {AuthUserDto} from '@app/auth/dto';
+import {UserRepository} from '@db/repository';
 
 @ApiTags('사용자')
 @ApiBearerAuth()
@@ -27,15 +30,17 @@ export class UserController {
   constructor(
     @Inject(Logger) private logger: LoggerService,
     private authService: AuthService,
-    private userService: UserService
+    private userService: UserService,
+    private userRepository: UserRepository
   ) {}
 
   @ApiOperation({summary: '사용자 정보 조회'})
-  // @ApiBody({type: UserCredentialDto})
   @ApiOkResponse({model: UserInfoDto})
   @Get('/info')
-  async getInfo(@User() user: UserEntity): Promise<OkResponseDto<UserInfoDto>> {
-    const resDto = new UserInfoDto().fromInstance(user);
+  async getInfo(@User() user: AuthUserDto): Promise<OkResponseDto<UserInfoDto>> {
+    const userEntity = await this.userRepository.findByCondition({user_idx: user.userIdx});
+
+    const resDto = new UserInfoDto().fromInstance(userEntity);
 
     return new OkResponseDto(resDto);
   }
@@ -44,7 +49,7 @@ export class UserController {
   @ApiOkResponse({model: UserInfoDto})
   @Patch('/info')
   async editInfo(
-    @User() user: UserEntity,
+    @User() user: AuthUserDto,
     @Body() editDto: EditUserInfoDto
   ): Promise<OkResponseDto<UserInfoDto>> {
     //비밀번호 변경
@@ -52,23 +57,72 @@ export class UserController {
       //현재 비밀번호 확인
       const isValidCurrentPassword = await this.userService.verifyPasswordByIdx(
         editDto.currentPassword,
-        user.user_idx
+        user.userIdx
       );
       if (!isValidCurrentPassword) {
         throw new BadRequestException('current password mismatch');
       }
 
       //비밀번호 수정
-      if (!(await this.userService.changePassword(user.user_idx, editDto.newPassword))) {
+      if (!(await this.userService.changePassword(user.userIdx, editDto.newPassword))) {
         throw new BadRequestException('password change failed');
       }
     }
 
     //유저 정보 변경
-    const userEntity = await this.userService.editInfo(user.user_idx, editDto);
+    const userEntity = await this.userService.editInfo(user.userIdx, editDto);
 
     const resDto = new UserInfoDto().fromInstance(userEntity);
 
     return new OkResponseDto(resDto);
+  }
+
+  @ApiOperation({summary: 'OTP 등록을 위한 정보 요청'})
+  @ApiOkResponse({model: ResponseRegisterOtpDto})
+  @Get('/otp/register')
+  async registerOtp(@User() user: AuthUserDto): Promise<OkResponseDto<ResponseRegisterOtpDto>> {
+    //OTP 등록 여부 확인
+    if (user.useOtp == 'y' && user.otpSecret) {
+      throw new BadRequestException('You have already registered OTP');
+    }
+
+    //OTP secret 생성
+    const userEntity = await this.userRepository.findByCondition({user_idx: user.userIdx});
+    const otpSecret = await this.userService.createOtpSecret(userEntity);
+
+    const resDto = new ResponseRegisterOtpDto().fromInstance({
+      secret: otpSecret.secret,
+      qrCodeImage: otpSecret.qrCodeImage,
+    });
+
+    return new OkResponseDto(resDto);
+  }
+
+  @ApiOperation({summary: 'OTP 등록 처리'})
+  @ApiBody({type: RegisterOtpDto})
+  @ApiOkResponse({model: null})
+  @Post('/otp/register')
+  @HttpCode(200)
+  async registerOtpProc(
+    @User() user: AuthUserDto,
+    @Body() registerDto: RegisterOtpDto
+  ): Promise<OkResponseDto<null>> {
+    //OTP 등록 여부 확인
+    if (user.useOtp == 'y' && user.otpSecret) {
+      throw new BadRequestException('You have already registered OTP');
+    }
+
+    //set vars: request
+    const {secret: otpSecret, token: otpToken} = registerDto;
+
+    //OTP 토큰 검증
+    if (!this.authService.verifyOtpToken(otpToken, otpSecret)) {
+      throw new BadRequestException('Invalid OTP token');
+    }
+
+    //OTP secret 저장
+    await this.userService.upsertOtpSecret(user.userIdx, otpSecret);
+
+    return new OkResponseDto();
   }
 }

@@ -8,6 +8,7 @@ import {jwtConfig as jwtConfigBase} from '@config';
 import {ConfigType} from '@nestjs/config';
 import {TokenExpiredError} from 'jsonwebtoken';
 import * as speakeasy from 'speakeasy';
+import {AuthUserDto} from '@app/auth/dto';
 
 @Injectable()
 export class AuthService {
@@ -76,10 +77,10 @@ export class AuthService {
 
   /**
    * access token 생성
-   * @param userEntity
+   * @param user
    */
-  createAccessToken(userEntity: UserEntity): string {
-    return this.jwtService.sign({uid: userEntity.uid});
+  createAccessToken(user: UserEntity | AuthUserDto): string {
+    return this.jwtService.sign({uid: user.uid});
   }
 
   /**
@@ -102,11 +103,11 @@ export class AuthService {
 
   /**
    * refresh token 생성
-   * @param userEntity
+   * @param user
    */
-  createRefreshToken(userEntity: UserEntity): string {
+  createRefreshToken(user: UserEntity | AuthUserDto): string {
     return this.jwtService.sign(
-      {uid: userEntity.uid},
+      {uid: user.uid},
       {
         secret: this.jwtConfig.refreshTokenSecret,
         algorithm: this.jwtConfig.refreshTokenAlgorithm,

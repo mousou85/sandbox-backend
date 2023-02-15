@@ -140,6 +140,31 @@ export class UserRepository extends BaseRepository<UserEntity> {
   }
 
   /**
+   * otp secret 저장/수정
+   * @param userIdx
+   * @param otpSecret
+   * @param entityManager
+   */
+  async setOtpSecret(
+    userIdx: number,
+    otpSecret: string,
+    entityManager: EntityManager
+  ): Promise<void> {
+    let entity = await this.userOtpRepository.findOneBy({user_idx: userIdx});
+    if (!entity) {
+      entity = this.userOtpRepository.create();
+      entity.user_idx = userIdx;
+    }
+    entity.secret = otpSecret;
+
+    if (entityManager) {
+      await entityManager.save(entity, {reload: false});
+    } else {
+      await this.userOtpRepository.save(entity, {reload: false});
+    }
+  }
+
+  /**
    * login fail count 증가
    * @param userIdx
    */
