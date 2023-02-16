@@ -1,7 +1,6 @@
 import {Inject, Injectable} from '@nestjs/common';
 import {TypeOrmModuleOptions, TypeOrmOptionsFactory} from '@nestjs/typeorm';
 import {ConfigType} from '@nestjs/config';
-import {UserEntity, UserLoginLogEntity, UserOtpEntity, UserPasswordSaltEntity} from '@db/entity';
 import {TypeORMLogger} from '@common/logger';
 import {typeOrmConfig} from '@config';
 
@@ -24,7 +23,7 @@ export class TypeOrmOptionService implements TypeOrmOptionsFactory {
       timezone: '+09:00',
       logging: this.config.logging,
       logger: this.config.logging ? new TypeORMLogger() : null,
-      entities: [UserEntity, UserLoginLogEntity, UserPasswordSaltEntity, UserOtpEntity],
+      entities: this.config.entities,
     };
   }
 }

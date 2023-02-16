@@ -4,6 +4,9 @@ import {IsNotEmpty} from 'class-validator';
 import {ApiProperty} from '@nestjs/swagger';
 import {DtoTransform} from '@common/dto.transform';
 
+/**
+ * OTP 등록 요청 응답 DTO
+ */
 export class ResponseRegisterOtpDto extends DefaultDto<{secret: string; qrCodeImage: string}> {
   @ApiProperty({description: 'OTP secret'})
   @Expose()
@@ -16,6 +19,9 @@ export class ResponseRegisterOtpDto extends DefaultDto<{secret: string; qrCodeIm
   qrCodeImage: string;
 }
 
+/**
+ * OTP 등록 인증 요청 DTO
+ */
 export class RegisterOtpDto {
   @ApiProperty({description: 'OTP secret'})
   @Expose()

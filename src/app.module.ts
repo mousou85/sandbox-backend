@@ -17,6 +17,7 @@ import {UserModule} from '@app/user/user.module';
 import {ClsModule} from 'nestjs-cls';
 import {TypeOrmOptionService} from '@config/service';
 import {jwtConfig, typeOrmConfig} from '@config';
+import {InvestModule} from '@app/invest/invest.module';
 
 @Module({
   imports: [
@@ -33,6 +34,7 @@ import {jwtConfig, typeOrmConfig} from '@config';
     DbModule,
     forwardRef(() => AuthModule),
     UserModule,
+    InvestModule,
   ],
   controllers: [],
   providers: [Logger, {provide: APP_PIPE, useClass: ValidationPipe}],

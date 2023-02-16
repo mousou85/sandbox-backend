@@ -1,5 +1,6 @@
 import {AuthModule} from '@app/auth/auth.module';
 import {UserModule} from '@app/user/user.module';
+import {InvestModule} from '@app/invest/invest.module';
 
 export const swaggerConfig = [
   {
@@ -7,6 +8,6 @@ export const swaggerConfig = [
     description: 'sandbox 공통 api',
     version: '0.1',
     urlPrefix: 'api-doc',
-    includeModules: [AuthModule, UserModule],
+    includeModules: [AuthModule, UserModule, InvestModule],
   },
 ];
