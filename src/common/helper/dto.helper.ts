@@ -4,11 +4,35 @@ import {
   plainToClassFromExist,
   plainToInstance,
 } from 'class-transformer';
+import {ValidatorOptions} from 'class-validator/types/validation/ValidatorOptions';
+import {validate} from 'class-validator';
+import {BadRequestException} from '@nestjs/common';
 
 /**
  * DTO 헬퍼
  */
 export class DtoHelper {
+  /**
+   * DTO 유효성 검증을 실행 후 에러가 있으면 BadRequestException을 실행
+   * @param obj
+   * @param validatorOptions
+   */
+  static async validate(obj: object, validatorOptions?: ValidatorOptions): Promise<void> {
+    const errors = await validate(obj, validatorOptions);
+
+    if (Array.isArray(errors) && errors.length) {
+      const errorMsgs = [];
+      for (const err of errors) {
+        const {constraints} = err;
+        for (const key of Object.keys(constraints)) {
+          errorMsgs.push(constraints[key]);
+        }
+      }
+
+      throw new BadRequestException(errorMsgs);
+    }
+  }
+
   /**
    * 객체의 키를 카멜케이스로 변환 및 plain 시킨후 반환
    * @param obj

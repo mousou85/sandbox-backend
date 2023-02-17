@@ -21,7 +21,6 @@ import {EditUserInfoDto, RegisterOtpDto, ResponseRegisterOtpDto, UserInfoDto} fr
 import {OkResponseDto} from '@common/dto';
 import {ApiCustomBody, ApiOkResponse} from '@common/decorator/swagger';
 import {AuthUserDto} from '@app/auth/dto';
-import {UserRepository} from '@db/repository';
 import {RequiredPipe} from '@common/pipe';
 
 @ApiTags('사용자')
@@ -32,15 +31,14 @@ export class UserController {
   constructor(
     @Inject(Logger) private logger: LoggerService,
     private authService: AuthService,
-    private userService: UserService,
-    private userRepository: UserRepository
+    private userService: UserService
   ) {}
 
   @ApiOperation({summary: '사용자 정보 조회'})
   @ApiOkResponse({model: UserInfoDto})
   @Get('/info')
   async getInfo(@User() user: AuthUserDto): Promise<OkResponseDto<UserInfoDto>> {
-    const userEntity = await this.userRepository.findByCondition({user_idx: user.userIdx});
+    const userEntity = await this.userService.getUser(user.userIdx);
 
     const resDto = new UserInfoDto().fromInstance(userEntity);
 
@@ -87,7 +85,7 @@ export class UserController {
     }
 
     //OTP secret 생성
-    const userEntity = await this.userRepository.findByCondition({user_idx: user.userIdx});
+    const userEntity = await this.userService.getUser(user.userIdx);
     const otpSecret = await this.userService.createOtpSecret(userEntity);
 
     const resDto = new ResponseRegisterOtpDto().fromInstance({

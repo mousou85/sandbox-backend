@@ -1,5 +1,5 @@
 import {Injectable} from '@nestjs/common';
-import {UserLoginLogRepository, UserRepository} from '@db/repository';
+import {IUserJoinOption, UserLoginLogRepository, UserRepository} from '@db/repository';
 import * as crypto from 'crypto';
 import {EUserLoginLogType, UserEntity} from '@db/entity';
 import {DataNotFoundException} from '@common/exception';
@@ -15,6 +15,15 @@ export class UserService {
     protected userRepository: UserRepository,
     protected loginLogRepository: UserLoginLogRepository
   ) {}
+
+  /**
+   * 유저 데이터 반환
+   * @param userIdx
+   * @param joinOption
+   */
+  async getUser(userIdx: number, joinOption?: IUserJoinOption): Promise<UserEntity> {
+    return this.userRepository.findByCondition({user_idx: userIdx}, joinOption);
+  }
 
   /**
    * 비밀번호 해싱

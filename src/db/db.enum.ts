@@ -35,3 +35,13 @@ export const EInvestHistoryRevenueType = {
 } as const;
 export type EInvestHistoryRevenueType =
   (typeof EInvestHistoryRevenueType)[keyof typeof EInvestHistoryRevenueType];
+
+/**
+ * 투자 기간 요약 타입
+ */
+export const EInvestSummaryDateType = {
+  month: 'month',
+  year: 'year',
+} as const;
+export type EInvestSummaryDateType =
+  (typeof EInvestSummaryDateType)[keyof typeof EInvestSummaryDateType];

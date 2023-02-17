@@ -15,7 +15,8 @@ export interface IUserLoginLogCondition {
 @Injectable()
 export class UserLoginLogRepository extends BaseRepository<UserLoginLogEntity> {
   constructor(
-    @InjectRepository(UserLoginLogEntity) protected repository: Repository<UserLoginLogEntity>
+    @InjectRepository(UserLoginLogEntity)
+    protected repository: Repository<UserLoginLogEntity>
   ) {
     super(repository.target, repository.manager, repository.queryRunner);
   }

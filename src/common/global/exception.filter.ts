@@ -29,10 +29,16 @@ export class GlobalExceptionFilter implements ExceptionFilter {
     let statusCode;
     let message, error;
 
+    /*
+     * 로그 출력
+     * dev 모드에선 console.error()로 한번더 출력
+     */
     if (process.env.NODE_ENV != 'production') {
-      console.log(exception);
+      console.error(exception);
     }
+    this.logger.error(exception, {});
 
+    //exception의 타입에 따라 처리 분리
     if (exception instanceof TypeORMError) {
       statusCode = HttpStatus.BAD_REQUEST;
       error = exception.name;
@@ -46,18 +52,20 @@ export class GlobalExceptionFilter implements ExceptionFilter {
         message = exceptionResponse;
       } else {
         error = exceptionResponse['error'] ?? exception['message'];
-        message = Array.isArray(exceptionResponse['message'])
-          ? exceptionResponse['message'].shift()
-          : exceptionResponse['message'] || 'Unknown Error';
+
+        if (Array.isArray(exceptionResponse['message'])) {
+          message = exceptionResponse['message'].length
+            ? exceptionResponse['message'][0]
+            : 'Unknown Error';
+        } else {
+          message = exceptionResponse['message'] || 'Unknown Error';
+        }
       }
     } else {
       statusCode = HttpStatus.INTERNAL_SERVER_ERROR;
       error = (exception as Error).name;
       message = (exception as Error).message;
     }
-
-    //로그 출력
-    this.logger.error(exception);
 
     const errorResponseDto = new ErrorResponseDto(statusCode, error, message);
 

@@ -24,11 +24,11 @@ export interface IUserJoinOption {
 export class UserRepository extends BaseRepository<UserEntity> {
   constructor(
     @InjectRepository(UserEntity)
-    protected readonly repository: Repository<UserEntity>,
+    protected repository: Repository<UserEntity>,
     @InjectRepository(UserPasswordSaltEntity)
-    protected readonly userPasswordSaltRepository: Repository<UserPasswordSaltEntity>,
+    protected userPasswordSaltRepository: Repository<UserPasswordSaltEntity>,
     @InjectRepository(UserOtpEntity)
-    protected readonly userOtpRepository: Repository<UserOtpEntity>
+    protected userOtpRepository: Repository<UserOtpEntity>
   ) {
     super(repository.target, repository.manager, repository.queryRunner);
   }
