@@ -19,7 +19,7 @@ import {JwtAuthGuard} from '@app/auth/authGuard';
 import {User} from '@app/auth/auth.decorator';
 import {EditUserInfoDto, RegisterOtpDto, ResponseRegisterOtpDto, UserInfoDto} from '@app/user/dto';
 import {OkResponseDto} from '@common/dto';
-import {ApiCustomBody, ApiOkResponse} from '@common/decorator/swagger';
+import {ApiBodyCustom, ApiOkResponseCustom} from '@common/decorator/swagger';
 import {AuthUserDto} from '@app/auth/dto';
 import {RequiredPipe} from '@common/pipe';
 
@@ -35,18 +35,18 @@ export class UserController {
   ) {}
 
   @ApiOperation({summary: '사용자 정보 조회'})
-  @ApiOkResponse({model: UserInfoDto})
+  @ApiOkResponseCustom({model: UserInfoDto})
   @Get('/info')
   async getInfo(@User() user: AuthUserDto): Promise<OkResponseDto<UserInfoDto>> {
     const userEntity = await this.userService.getUser(user.userIdx);
 
-    const resDto = new UserInfoDto().fromInstance(userEntity);
+    const resDto = new UserInfoDto(userEntity);
 
     return new OkResponseDto(resDto);
   }
 
   @ApiOperation({summary: '사용자 정보 수정'})
-  @ApiOkResponse({model: UserInfoDto})
+  @ApiOkResponseCustom({model: UserInfoDto})
   @Patch('/info')
   async editInfo(
     @User() user: AuthUserDto,
@@ -70,13 +70,13 @@ export class UserController {
     //유저 정보 변경
     const userEntity = await this.userService.editInfo(user.userIdx, editDto);
 
-    const resDto = new UserInfoDto().fromInstance(userEntity);
+    const resDto = new UserInfoDto(userEntity);
 
     return new OkResponseDto(resDto);
   }
 
   @ApiOperation({summary: 'OTP 등록을 위한 정보 요청'})
-  @ApiOkResponse({model: ResponseRegisterOtpDto})
+  @ApiOkResponseCustom({model: ResponseRegisterOtpDto})
   @Get('/otp/register')
   async registerOtp(@User() user: AuthUserDto): Promise<OkResponseDto<ResponseRegisterOtpDto>> {
     //OTP 등록 여부 확인
@@ -88,7 +88,7 @@ export class UserController {
     const userEntity = await this.userService.getUser(user.userIdx);
     const otpSecret = await this.userService.createOtpSecret(userEntity);
 
-    const resDto = new ResponseRegisterOtpDto().fromInstance({
+    const resDto = new ResponseRegisterOtpDto({
       secret: otpSecret.secret,
       qrCodeImage: otpSecret.qrCodeImage,
     });
@@ -98,7 +98,7 @@ export class UserController {
 
   @ApiOperation({summary: 'OTP 등록 처리'})
   @ApiBody({type: RegisterOtpDto})
-  @ApiOkResponse({model: null})
+  @ApiOkResponseCustom({model: null})
   @Post('/otp/register')
   @HttpCode(200)
   async registerOtpProc(
@@ -125,8 +125,8 @@ export class UserController {
   }
 
   @ApiOperation({summary: '등록된 OTP 해제'})
-  @ApiCustomBody({otpToken: {description: 'OTP 토큰'}}, ['otpToken'])
-  @ApiOkResponse({model: null})
+  @ApiBodyCustom({otpToken: {description: 'OTP 토큰'}}, ['otpToken'])
+  @ApiOkResponseCustom({model: null})
   @Delete('/otp')
   async unregisterOtp(
     @User() user: AuthUserDto,

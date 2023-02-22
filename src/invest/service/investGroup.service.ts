@@ -1,7 +1,8 @@
 import {Injectable} from '@nestjs/common';
 import {DataSource} from 'typeorm';
 import {IInvestGroupJoinOption, InvestGroupRepository} from '@db/repository';
-import {IQueryListOption} from '@db/db.interface';
+import {IFindAllResult, IQueryListOption} from '@db/db.interface';
+import {InvestGroupEntity} from '@db/entity';
 
 @Injectable()
 export class InvestGroupService {
@@ -9,6 +10,13 @@ export class InvestGroupService {
     protected dataSource: DataSource,
     protected investGroupRepository: InvestGroupRepository
   ) {}
+
+  async getGroup(
+    groupIdx: number,
+    joinOption?: IInvestGroupJoinOption
+  ): Promise<InvestGroupEntity> {
+    return this.investGroupRepository.findByCondition({group_idx: groupIdx}, joinOption);
+  }
 
   /**
    * 상품 그룹 목록 반환
@@ -20,7 +28,7 @@ export class InvestGroupService {
     userIdx: number,
     listOption?: IQueryListOption,
     joinOption?: IInvestGroupJoinOption
-  ) {
+  ): Promise<IFindAllResult<InvestGroupEntity>> {
     let {sort, page, pageSize, getAll} = listOption;
 
     if (!sort) sort = {column: 'group.group_idx', direction: 'ASC'};

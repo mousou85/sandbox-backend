@@ -9,7 +9,7 @@ import {DtoTransform} from '@common/dto.transform';
 /**
  * 사용자 정보 DTO
  */
-export class UserInfoDto extends DefaultDto<UserEntity> {
+export class UserInfoDto extends DefaultDto {
   @ApiProperty({description: 'user idx', required: true})
   @Expose()
   @IsInt({allowEmptyString: false})
@@ -35,6 +35,16 @@ export class UserInfoDto extends DefaultDto<UserEntity> {
   @IsEnum(['y', 'n'], {allowEmptyString: false})
   @IsNotEmpty()
   useOtp: 'y' | 'n';
+
+  constructor(data?: UserEntity) {
+    super();
+    if (data) {
+      this.userIdx = data.user_idx;
+      this.id = data.id;
+      this.name = data.name;
+      this.useOtp = data.use_otp;
+    }
+  }
 }
 
 /**

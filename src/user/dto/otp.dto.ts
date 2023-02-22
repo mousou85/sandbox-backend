@@ -7,7 +7,7 @@ import {DtoTransform} from '@common/dto.transform';
 /**
  * OTP 등록 요청 응답 DTO
  */
-export class ResponseRegisterOtpDto extends DefaultDto<{secret: string; qrCodeImage: string}> {
+export class ResponseRegisterOtpDto extends DefaultDto {
   @ApiProperty({description: 'OTP secret'})
   @Expose()
   @IsNotEmpty()
@@ -17,6 +17,15 @@ export class ResponseRegisterOtpDto extends DefaultDto<{secret: string; qrCodeIm
   @Expose()
   @IsNotEmpty()
   qrCodeImage: string;
+
+  constructor(data?: {secret: string; qrCodeImage: string}) {
+    super();
+    if (data) {
+      const {secret, qrCodeImage} = data;
+      this.secret = secret;
+      this.qrCodeImage = qrCodeImage;
+    }
+  }
 }
 
 /**

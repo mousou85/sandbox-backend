@@ -1,13 +1,13 @@
 import {Exclude} from 'class-transformer';
+import {ValidatorOptions} from 'class-validator';
 import {DtoHelper} from '@common/helper';
 
 /**
  * default dto
  */
-export class DefaultDto<T> {
+export class DefaultDto {
   @Exclude()
-  fromInstance(instance: T): this {
-    DtoHelper.transformForExistsDto(instance, this);
-    return this;
+  async validate(validatorOptions?: ValidatorOptions) {
+    await DtoHelper.validate(this, validatorOptions);
   }
 }

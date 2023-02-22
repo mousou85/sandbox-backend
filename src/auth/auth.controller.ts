@@ -22,7 +22,7 @@ import {
 } from '@app/auth/dto';
 import {OkResponseDto} from '@common/dto';
 import {ApiBody, ApiOperation, ApiTags} from '@nestjs/swagger';
-import {ApiCustomBody, ApiOkResponse} from '@common/decorator/swagger';
+import {ApiBodyCustom, ApiOkResponseCustom} from '@common/decorator/swagger';
 import {RequiredPipe} from '@common/pipe';
 import {UserService} from '@app/user/service';
 
@@ -37,7 +37,7 @@ export class AuthController {
 
   @ApiOperation({summary: '로그인'})
   @ApiBody({type: UserCredentialDto})
-  @ApiOkResponse({
+  @ApiOkResponseCustom({
     description: 'response는 두가지 타입이 있음',
     model: [LoginSuccessDto, NeedOtpVerifyDto],
   })
@@ -51,16 +51,18 @@ export class AuthController {
 
     //otp 사용 여부에 따라 response dto 다름
     if (user.useOtp == 'y') {
-      responseDto = new NeedOtpVerifyDto();
-      responseDto.needOTPVerify = true;
+      responseDto = new NeedOtpVerifyDto(true);
     } else {
       const accessToken = this.authService.createAccessToken(user);
       const refreshToken = this.authService.createRefreshToken(user);
 
-      responseDto = new LoginSuccessDto().fromInstance({
+      responseDto = new LoginSuccessDto({
         accessToken,
         refreshToken,
-        ...user,
+        userIdx: user.userIdx,
+        id: user.id,
+        name: user.name,
+        useOtp: user.useOtp,
       });
     }
 
@@ -69,7 +71,7 @@ export class AuthController {
 
   @ApiOperation({summary: 'OTP 인증'})
   @ApiBody({type: UserOtpCredentialDto})
-  @ApiOkResponse({model: [LoginSuccessDto]})
+  @ApiOkResponseCustom({model: LoginSuccessDto})
   @Post('/verify-otp')
   @HttpCode(200)
   async verifyOtp(
@@ -93,18 +95,21 @@ export class AuthController {
     //insert login log
     await this.userService.insertLoginLog(user.user_idx, 'login');
 
-    const resDto = new LoginSuccessDto().fromInstance({
+    const resDto = new LoginSuccessDto({
       accessToken,
       refreshToken,
-      ...user,
+      userIdx: user.user_idx,
+      id: user.id,
+      name: user.name,
+      useOtp: user.use_otp,
     });
 
     return new OkResponseDto(resDto);
   }
 
   @ApiOperation({summary: '액세스 토큰 재발급'})
-  @ApiCustomBody({refreshToken: {type: 'string', description: '리프레시 토큰'}}, ['refreshToken'])
-  @ApiOkResponse({model: ReissueTokenDto})
+  @ApiBodyCustom({refreshToken: {type: 'string', description: '리프레시 토큰'}}, ['refreshToken'])
+  @ApiOkResponseCustom({model: ReissueTokenDto})
   @Post('/reissue-token')
   @HttpCode(200)
   async reissueToken(

@@ -4,10 +4,12 @@ import {
   Entity,
   Index,
   JoinColumn,
+  JoinTable,
+  ManyToMany,
   ManyToOne,
   PrimaryGeneratedColumn,
 } from 'typeorm';
-import {UserEntity} from '@db/entity';
+import {InvestGroupEntity, UserEntity} from '@db/entity';
 import {EYNState} from '@db/db.enum';
 import {DateTransformer} from '@db/transformer';
 
@@ -86,4 +88,12 @@ export class InvestItemEntity extends BaseEntity {
     foreignKeyConstraintName: 'invest_item_fk_1',
   })
   user: UserEntity;
+
+  @ManyToMany(() => InvestGroupEntity, (data) => data.investItem)
+  @JoinTable({
+    name: 'invest_group_item',
+    joinColumn: {name: 'item_idx', referencedColumnName: 'item_idx'},
+    inverseJoinColumn: {name: 'group_idx', referencedColumnName: 'group_idx'},
+  })
+  investGroup: InvestGroupEntity[];
 }

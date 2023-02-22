@@ -12,6 +12,7 @@ export interface IInvestGroupCondition {
 
 export interface IInvestGroupJoinOption {
   user?: boolean;
+  investItem?: boolean;
 }
 
 @Injectable()
@@ -27,6 +28,9 @@ export class InvestGroupRepository extends BaseRepository<InvestGroupEntity> {
     const builder = this.repository.createQueryBuilder('group');
     if (joinOption?.user) {
       builder.innerJoinAndSelect('group.user', 'user');
+    }
+    if (joinOption?.investItem) {
+      builder.leftJoinAndSelect('group.investItem', 'item');
     }
 
     return builder;

@@ -4,8 +4,7 @@ import {
   plainToClassFromExist,
   plainToInstance,
 } from 'class-transformer';
-import {ValidatorOptions} from 'class-validator/types/validation/ValidatorOptions';
-import {validate} from 'class-validator';
+import {validate, ValidatorOptions} from 'class-validator';
 import {BadRequestException} from '@nestjs/common';
 
 /**
@@ -38,6 +37,7 @@ export class DtoHelper {
    * @param obj
    */
   static keyToCamelCase(obj: any): any {
+    if (obj === undefined || obj === null) return obj;
     if (typeof obj != 'object') return obj;
     if (!Object.keys(obj).length) return obj;
 

@@ -15,8 +15,8 @@ interface IJwtConfig {
 export const jwtConfig = registerAs('jwt', (): IJwtConfig => {
   let accessTokenExpire, refreshTokenExpire;
   if (process.env.NODE_ENV == 'development') {
-    accessTokenExpire = '1d';
-    refreshTokenExpire = '7d';
+    accessTokenExpire = '7d';
+    refreshTokenExpire = '30d';
   } else {
     accessTokenExpire = '10m';
     refreshTokenExpire = '1d';

@@ -1,8 +1,8 @@
-import {NestFactory} from '@nestjs/core';
+import {NestFactory, Reflector} from '@nestjs/core';
 import {AppModule} from '@app/app.module';
 import * as process from 'process';
 import {createLogger} from '@common/logger';
-import {ValidationPipe} from '@nestjs/common';
+import {ClassSerializerInterceptor, ValidationPipe} from '@nestjs/common';
 import {GlobalExceptionFilter} from '@common/global';
 import {ClsMiddleware} from 'nestjs-cls';
 import {clsIdGenerator, clsMiddlewareSetup} from '@common/middleware/cls.middleware';
@@ -38,6 +38,9 @@ async function bootstrap() {
 
   //set global filter
   app.useGlobalFilters(new GlobalExceptionFilter(logger));
+
+  //set global class serialize interceptor
+  app.useGlobalInterceptors(new ClassSerializerInterceptor(app.get(Reflector)));
 
   //enable swagger module
   if (process.env.NODE_ENV == 'development') {

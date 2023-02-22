@@ -7,7 +7,7 @@ import {ApiBody, ApiBodyOptions} from '@nestjs/swagger';
 /**
  * swagger api 커스텀 body
  */
-export const ApiCustomBody =
+export const ApiBodyCustom =
   (
     properties: Record<string, SchemaObject | ReferenceObject>,
     requiredProperties?: string[]

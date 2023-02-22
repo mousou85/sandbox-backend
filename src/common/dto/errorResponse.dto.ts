@@ -1,30 +1,5 @@
+import {ResponseBaseDto} from '@common/dto';
 import {ApiProperty} from '@nestjs/swagger';
-
-class ResponseBaseDto {
-  @ApiProperty({
-    description: 'API 성공여부',
-    required: true,
-    type: 'boolean',
-    examples: [true, false],
-  })
-  isSuccessful: boolean;
-
-  constructor(isSuccessful: boolean) {
-    this.isSuccessful = isSuccessful;
-  }
-}
-
-/**
- * success response dto
- */
-export class OkResponseDto<T> extends ResponseBaseDto {
-  data?: T | T[];
-
-  constructor(data?: T | T[]) {
-    super(true);
-    if (data) this.data = data;
-  }
-}
 
 /**
  * error response dto
