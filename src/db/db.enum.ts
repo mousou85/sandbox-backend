@@ -45,3 +45,12 @@ export const EInvestSummaryDateType = {
 } as const;
 export type EInvestSummaryDateType =
   (typeof EInvestSummaryDateType)[keyof typeof EInvestSummaryDateType];
+
+/**
+ * 투자 단위 타입
+ */
+export const EInvestUnitType = {
+  int: 'int',
+  float: 'float',
+} as const;
+export type EInvestUnitType = (typeof EInvestUnitType)[keyof typeof EInvestUnitType];

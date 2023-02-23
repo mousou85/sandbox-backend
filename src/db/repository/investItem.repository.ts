@@ -15,6 +15,7 @@ export interface IInvestItemCondition {
 
 export interface IInvestItemJoinOption {
   investGroup?: boolean;
+  investUnit?: boolean;
   user?: boolean;
 }
 
@@ -35,6 +36,9 @@ export class InvestItemRepository extends BaseRepository<InvestItemEntity> {
     joinOption?.investGroup
       ? builder.leftJoinAndSelect('item.investGroup', 'group')
       : builder.leftJoin('item.investGroup', 'group');
+    if (joinOption?.investUnit) {
+      builder.leftJoinAndSelect('item.investUnit', 'unit');
+    }
 
     return builder;
   }

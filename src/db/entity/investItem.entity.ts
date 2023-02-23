@@ -9,7 +9,7 @@ import {
   ManyToOne,
   PrimaryGeneratedColumn,
 } from 'typeorm';
-import {InvestGroupEntity, UserEntity} from '@db/entity';
+import {InvestGroupEntity, InvestUnitEntity, UserEntity} from '@db/entity';
 import {EYNState} from '@db/db.enum';
 import {DateTransformer} from '@db/transformer';
 
@@ -96,4 +96,12 @@ export class InvestItemEntity extends BaseEntity {
     inverseJoinColumn: {name: 'group_idx', referencedColumnName: 'group_idx'},
   })
   investGroup: InvestGroupEntity[];
+
+  @ManyToMany(() => InvestUnitEntity, (data) => data.investItem)
+  @JoinTable({
+    name: 'invest_unit_set',
+    joinColumn: {name: 'item_idx', referencedColumnName: 'item_idx'},
+    inverseJoinColumn: {name: 'unit_idx', referencedColumnName: 'unit_idx'},
+  })
+  investUnit: InvestUnitEntity[];
 }

@@ -3,6 +3,8 @@ import {TypeOrmModule} from '@nestjs/typeorm';
 import {
   InvestGroupEntity,
   InvestItemEntity,
+  InvestUnitEntity,
+  InvestUnitSetEntity,
   UserEntity,
   UserLoginLogEntity,
   UserOtpEntity,
@@ -11,6 +13,7 @@ import {
 import {
   InvestGroupRepository,
   InvestItemRepository,
+  InvestUnitRepository,
   UserLoginLogRepository,
   UserRepository,
 } from '@db/repository';
@@ -24,10 +27,24 @@ import {
       UserOtpEntity,
       InvestGroupEntity,
       InvestItemEntity,
+      InvestUnitEntity,
+      InvestUnitSetEntity,
     ]),
   ],
   controllers: [],
-  providers: [UserRepository, UserLoginLogRepository, InvestGroupRepository, InvestItemRepository],
-  exports: [UserRepository, UserLoginLogRepository, InvestGroupRepository, InvestItemRepository],
+  providers: [
+    UserRepository,
+    UserLoginLogRepository,
+    InvestGroupRepository,
+    InvestItemRepository,
+    InvestUnitRepository,
+  ],
+  exports: [
+    UserRepository,
+    UserLoginLogRepository,
+    InvestGroupRepository,
+    InvestItemRepository,
+    InvestUnitRepository,
+  ],
 })
 export class DbModule {}

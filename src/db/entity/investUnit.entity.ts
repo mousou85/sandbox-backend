@@ -4,14 +4,17 @@ import {
   Entity,
   Index,
   JoinColumn,
+  JoinTable,
+  ManyToMany,
   ManyToOne,
   PrimaryGeneratedColumn,
 } from 'typeorm';
-import {UserEntity} from '@db/entity';
+import {InvestItemEntity, UserEntity} from '@db/entity';
+import {EInvestUnitType} from '@db/db.enum';
 
 @Entity('invest_unit')
 @Index('IDX_USER', ['user_idx'])
-@Index('IDX_UNIT', ['unit'])
+@Index('IDX_UNIT', ['unit_idx'])
 export class InvestUnitEntity extends BaseEntity {
   @PrimaryGeneratedColumn({
     type: 'int',
@@ -38,7 +41,7 @@ export class InvestUnitEntity extends BaseEntity {
     length: 5,
     nullable: false,
   })
-  unit_type: string;
+  unit_type: EInvestUnitType;
 
   /**
    * relations
@@ -53,4 +56,12 @@ export class InvestUnitEntity extends BaseEntity {
     foreignKeyConstraintName: 'invest_unit_fk_1',
   })
   user: UserEntity;
+
+  @ManyToMany(() => InvestItemEntity, (data) => data.investUnit)
+  @JoinTable({
+    name: 'invest_unit_set',
+    joinColumn: {name: 'unit_idx', referencedColumnName: 'unit_idx'},
+    inverseJoinColumn: {name: 'item_idx', referencedColumnName: 'item_idx'},
+  })
+  investItem: InvestItemEntity[];
 }

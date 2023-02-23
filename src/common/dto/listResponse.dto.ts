@@ -48,4 +48,24 @@ export class ListResponseDto<T> extends ResponseBaseDto {
     super(true);
     this.data = new ListDto<T>(type, list, totalCount, totalPage);
   }
+
+  /**
+   * 총 데이터수 setter
+   * @param totalCount
+   */
+  @Exclude()
+  setTotalCount(totalCount: number): this {
+    this.data.totalCount = totalCount;
+    return this;
+  }
+
+  /**
+   * 총 페이지수 setter
+   * @param totalPage
+   */
+  @Exclude()
+  setTotalPage(totalPage: number): this {
+    this.data.totalPage = totalPage;
+    return this;
+  }
 }
