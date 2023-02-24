@@ -3,13 +3,14 @@ import {DataSource} from 'typeorm';
 import {IInvestGroupCondition, IInvestGroupJoinOption, InvestGroupRepository} from '@db/repository';
 import {IFindAllResult, IQueryListOption} from '@db/db.interface';
 import {InvestGroupEntity} from '@db/entity';
-import {CreateInvestGroupDto} from '@app/invest/dto';
+import {CreateInvestGroupDto, UpdateInvestGroupDto} from '@app/invest/dto';
+import {DataNotFoundException} from '@common/exception';
 
 @Injectable()
 export class InvestGroupService {
   constructor(
     protected dataSource: DataSource,
-    protected investGroupRepository: InvestGroupRepository
+    public readonly investGroupRepository: InvestGroupRepository
   ) {}
 
   /**
@@ -70,5 +71,31 @@ export class InvestGroupService {
     await this.investGroupRepository.save(entity);
 
     return entity;
+  }
+
+  /**
+   * 상품 그룹 수정
+   * @param groupIdx
+   * @param updateDto
+   */
+  async updateGroup(groupIdx: number, updateDto: UpdateInvestGroupDto): Promise<InvestGroupEntity> {
+    const entity = await this.investGroupRepository.findOneBy({group_idx: groupIdx});
+    if (!entity) throw new DataNotFoundException('invest group');
+
+    entity.group_name = updateDto.groupName;
+    await this.investGroupRepository.save(entity);
+
+    return entity;
+  }
+
+  /**
+   * 상품 그룹 삭제
+   * @param groupIdx
+   */
+  async deleteGroup(groupIdx: number): Promise<void> {
+    const hasData = await this.investGroupRepository.existsBy({group_idx: groupIdx});
+    if (!hasData) throw new DataNotFoundException('invest group');
+
+    await this.investGroupRepository.delete({group_idx: groupIdx});
   }
 }

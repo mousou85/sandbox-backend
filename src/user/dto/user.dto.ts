@@ -50,7 +50,7 @@ export class UserInfoDto extends DefaultDto {
 /**
  * 사용자 정보 수정 DTO
  */
-export class EditUserInfoDto extends PickType(UserInfoDto, ['name'] as const) {
+export class UpdateUserInfoDto extends PickType(UserInfoDto, ['name'] as const) {
   @ApiProperty({description: 'new user password(비밀번호 변경시)', required: false})
   @MinLength(8)
   @Expose()

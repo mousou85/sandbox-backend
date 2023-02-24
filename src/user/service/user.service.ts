@@ -4,7 +4,7 @@ import * as crypto from 'crypto';
 import {EUserLoginLogType, UserEntity} from '@db/entity';
 import {DataNotFoundException} from '@common/exception';
 import {DataSource} from 'typeorm';
-import {EditUserInfoDto} from '@app/user/dto';
+import {UpdateUserInfoDto} from '@app/user/dto';
 import * as speakeasy from 'speakeasy';
 import * as qrcode from 'qrcode';
 
@@ -12,8 +12,8 @@ import * as qrcode from 'qrcode';
 export class UserService {
   constructor(
     protected dataSource: DataSource,
-    protected userRepository: UserRepository,
-    protected loginLogRepository: UserLoginLogRepository
+    public readonly userRepository: UserRepository,
+    public readonly loginLogRepository: UserLoginLogRepository
   ) {}
 
   /**
@@ -223,7 +223,7 @@ export class UserService {
    * @param userIdx
    * @param editDto 수정할 데이터(속성중 password 관련은 changePassword()로 변경해야함)
    */
-  async editInfo(userIdx: number, editDto: EditUserInfoDto): Promise<UserEntity> {
+  async editInfo(userIdx: number, editDto: UpdateUserInfoDto): Promise<UserEntity> {
     //set vars: 유저 데이터
     const userEntity = await this.userRepository.findByCondition({user_idx: userIdx});
     if (!userEntity) {

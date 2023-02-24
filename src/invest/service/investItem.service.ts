@@ -8,8 +8,16 @@ import {InvestItemEntity} from '@db/entity';
 export class InvestItemService {
   constructor(
     protected dataSource: DataSource,
-    protected investItemRepository: InvestItemRepository
+    public readonly investItemRepository: InvestItemRepository
   ) {}
+
+  /**
+   * 상품 유무 체크
+   * @param condition
+   */
+  async hasItem(condition: IInvestItemCondition): Promise<boolean> {
+    return this.investItemRepository.existsBy(condition);
+  }
 
   /**
    * 상품 목록 반환

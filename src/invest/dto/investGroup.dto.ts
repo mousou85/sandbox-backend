@@ -8,10 +8,9 @@ import {DefaultDto} from '@common/dto';
 import {InvestItemDto} from '@app/invest/dto';
 
 /**
- * 상품 그룹 DTO
+ * 상품 그룹 DTO(심플)
  */
-@ApiExtraModels(InvestItemDto)
-export class InvestGroupDto extends DefaultDto {
+export class InvestGroupDtoSimple extends DefaultDto {
   @ApiProperty({description: '그룹 IDX', required: true})
   @Expose()
   @IsInt({allowEmptyString: false})
@@ -23,6 +22,7 @@ export class InvestGroupDto extends DefaultDto {
   @Expose()
   @MaxLength(50)
   @IsNotEmpty()
+  @Transform(({value}) => DtoTransform.trim(value))
   groupName: string;
 
   @ApiProperty({description: '생성 시간', required: true})
@@ -32,6 +32,21 @@ export class InvestGroupDto extends DefaultDto {
   @Transform(({value}) => DtoTransform.parseDate(value))
   createdAt: string;
 
+  constructor(investGroupEntity?: InvestGroupEntity) {
+    super();
+    if (investGroupEntity) {
+      this.groupIdx = investGroupEntity.group_idx;
+      this.groupName = investGroupEntity.group_name;
+      this.createdAt = investGroupEntity.created_at;
+    }
+  }
+}
+
+/**
+ * 상품 그룹 DTO
+ */
+@ApiExtraModels(InvestItemDto)
+export class InvestGroupDto extends InvestGroupDtoSimple {
   @ApiProperty({
     description: '소속 상품 목록',
     type: 'array',
@@ -51,16 +66,16 @@ export class InvestGroupDto extends DefaultDto {
   }
 
   constructor(investGroupEntity?: InvestGroupEntity) {
-    super();
-    if (investGroupEntity) {
-      this.groupIdx = investGroupEntity.group_idx;
-      this.groupName = investGroupEntity.group_name;
-      this.createdAt = investGroupEntity.created_at;
-    }
+    super(investGroupEntity);
   }
 }
 
 /**
  * 상품 그룹 생성 DTO
  */
-export class CreateInvestGroupDto extends PickType(InvestGroupDto, ['groupName'] as const) {}
+export class CreateInvestGroupDto extends PickType(InvestGroupDtoSimple, ['groupName'] as const) {}
+
+/**
+ * 상품 그룹 수정 DTO
+ */
+export class UpdateInvestGroupDto extends PickType(InvestGroupDtoSimple, ['groupName'] as const) {}

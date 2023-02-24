@@ -8,7 +8,7 @@ import {InvestUnitEntity} from '@db/entity';
 export class InvestUnitService {
   constructor(
     protected dataSource: DataSource,
-    protected investUnitRepository: InvestUnitRepository
+    public readonly investUnitRepository: InvestUnitRepository
   ) {}
 
   /**

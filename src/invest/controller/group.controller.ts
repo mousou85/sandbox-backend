@@ -1,8 +1,9 @@
-import {ApiBearerAuth, ApiBody, ApiOperation, ApiTags} from '@nestjs/swagger';
+import {ApiBearerAuth, ApiBody, ApiOperation, ApiParam, ApiTags} from '@nestjs/swagger';
 import {
   BadRequestException,
   Body,
   Controller,
+  Delete,
   Get,
   HttpCode,
   Inject,
@@ -10,6 +11,7 @@ import {
   LoggerService,
   Param,
   ParseIntPipe,
+  Patch,
   Post,
   UseGuards,
 } from '@nestjs/common';
@@ -17,7 +19,14 @@ import {JwtAuthGuard} from '@app/auth/authGuard';
 import {User} from '@app/auth/auth.decorator';
 import {AuthUserDto} from '@app/auth/dto';
 import {InvestGroupService, InvestItemService, InvestUnitService} from '@app/invest/service';
-import {CreateInvestGroupDto, InvestGroupDto, InvestItemDto, InvestUnitDto} from '@app/invest/dto';
+import {
+  CreateInvestGroupDto,
+  InvestGroupDto,
+  InvestGroupDtoSimple,
+  InvestItemDto,
+  InvestUnitDto,
+  UpdateInvestGroupDto,
+} from '@app/invest/dto';
 import {ApiListResponse, ApiOkResponseCustom} from '@common/decorator/swagger';
 import {ListResponseDto, OkResponseDto} from '@common/dto';
 import {RequiredPipe} from '@common/pipe';
@@ -78,6 +87,7 @@ export class GroupController {
   }
 
   @ApiOperation({summary: '그룹 데이터 조회'})
+  @ApiParam({name: 'groupIdx', description: '그룹 IDX', type: 'number', required: true})
   @ApiOkResponseCustom({model: InvestGroupDto})
   @Get('/:groupIdx(\\d+)')
   async getGroup(
@@ -121,10 +131,13 @@ export class GroupController {
 
   @ApiOperation({summary: '그룹 데이터 추가'})
   @ApiBody({type: CreateInvestGroupDto})
-  @ApiOkResponseCustom({model: InvestGroupDto})
+  @ApiOkResponseCustom({model: InvestGroupDtoSimple})
   @Post('/')
   @HttpCode(200)
-  async addGroup(@User() user: AuthUserDto, @Body() createDto: CreateInvestGroupDto) {
+  async createGroup(
+    @User() user: AuthUserDto,
+    @Body() createDto: CreateInvestGroupDto
+  ): Promise<OkResponseDto<InvestGroupDtoSimple>> {
     //중복 체크
     const isDuplicate = await this.investGroupService.hasGroup({
       user_idx: user.userIdx,
@@ -138,8 +151,59 @@ export class GroupController {
     const groupEntity = await this.investGroupService.createGroup(user.userIdx, createDto);
 
     //set vars: 그룹 dto
-    const groupDto = new InvestGroupDto(groupEntity);
+    const groupDto = new InvestGroupDtoSimple(groupEntity);
 
     return new OkResponseDto(groupDto);
+  }
+
+  @ApiOperation({summary: '그룹 데이터 수정'})
+  @ApiParam({name: 'groupIdx', description: '그룹 IDX', type: 'number', required: true})
+  @ApiBody({type: UpdateInvestGroupDto})
+  @ApiOkResponseCustom({model: InvestGroupDtoSimple})
+  @Patch('/:groupIdx(\\d+)')
+  async updateGroup(
+    @User() user: AuthUserDto,
+    @Param('groupIdx', new RequiredPipe(), new ParseIntPipe()) groupIdx: number,
+    @Body() updateDto: UpdateInvestGroupDto
+  ): Promise<OkResponseDto<InvestGroupDtoSimple>> {
+    //데이터 유무 체크
+    const hasData = await this.investGroupService.hasGroup({
+      group_idx: groupIdx,
+      user_idx: user.userIdx,
+    });
+    if (!hasData) throw new DataNotFoundException('invest group');
+
+    //그룹 수정
+    const groupEntity = await this.investGroupService.updateGroup(groupIdx, updateDto);
+
+    //set vars: 그룹 dto
+    const groupDto = new InvestGroupDtoSimple(groupEntity);
+
+    return new OkResponseDto(groupDto);
+  }
+
+  @ApiOperation({summary: '그룹 데이터 삭제'})
+  @ApiParam({name: 'groupIdx', description: '그룹 IDX', type: 'number', required: true})
+  @ApiOkResponseCustom({model: null})
+  @Delete('/:groupIdx(\\d+)')
+  async deleteGroup(
+    @User() user: AuthUserDto,
+    @Param('groupIdx', new RequiredPipe(), new ParseIntPipe()) groupIdx: number
+  ): Promise<OkResponseDto<void>> {
+    //데이터 유무 체크
+    const hasData = await this.investGroupService.hasGroup({
+      group_idx: groupIdx,
+      user_idx: user.userIdx,
+    });
+    if (!hasData) throw new DataNotFoundException('invest group');
+
+    //그룹에 속한 상품 있는지 체크
+    const hasItem = await this.investItemService.hasItem({group_idx: groupIdx});
+    if (hasItem) throw new BadRequestException('Cannot delete group where item exists');
+
+    //그룹 삭제
+    await this.investGroupService.deleteGroup(groupIdx);
+
+    return new OkResponseDto();
   }
 }

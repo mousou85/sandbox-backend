@@ -17,7 +17,12 @@ import {AuthService} from '@app/auth/auth.service';
 import {UserService} from '@app/user/service';
 import {JwtAuthGuard} from '@app/auth/authGuard';
 import {User} from '@app/auth/auth.decorator';
-import {EditUserInfoDto, RegisterOtpDto, ResponseRegisterOtpDto, UserInfoDto} from '@app/user/dto';
+import {
+  RegisterOtpDto,
+  ResponseRegisterOtpDto,
+  UpdateUserInfoDto,
+  UserInfoDto,
+} from '@app/user/dto';
 import {OkResponseDto} from '@common/dto';
 import {ApiBodyCustom, ApiOkResponseCustom} from '@common/decorator/swagger';
 import {AuthUserDto} from '@app/auth/dto';
@@ -48,9 +53,9 @@ export class UserController {
   @ApiOperation({summary: '사용자 정보 수정'})
   @ApiOkResponseCustom({model: UserInfoDto})
   @Patch('/info')
-  async editInfo(
+  async updateInfo(
     @User() user: AuthUserDto,
-    @Body() editDto: EditUserInfoDto
+    @Body() editDto: UpdateUserInfoDto
   ): Promise<OkResponseDto<UserInfoDto>> {
     //비밀번호 변경
     if (editDto.newPassword && editDto.currentPassword) {
