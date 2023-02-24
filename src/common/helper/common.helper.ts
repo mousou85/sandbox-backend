@@ -1,3 +1,5 @@
+import {isDefined} from 'class-validator';
+
 export class CommonHelper {
   /**
    * sql page offset 반환
@@ -37,6 +39,25 @@ export class CommonHelper {
    */
   static stripSpace(value: string): string {
     return value.replace(/\s/g, '');
+  }
+
+  /**
+   * 문자열의 첫문자 대문자로 변경
+   * @param str 문자열
+   * @param everyWord 모든 단어의 첫번째 문자 대문자로 변경 여부
+   */
+  static capitalizeFirstLetter(str: string, everyWord: boolean = false): string {
+    if (!isDefined(str) || str === '') return str;
+
+    if (everyWord) {
+      const strArr = str.split(' ');
+      strArr.forEach((val, i) => {
+        strArr[i] = val.charAt(0).toUpperCase() + val.slice(1);
+      });
+      return strArr.join(' ');
+    } else {
+      return str.charAt(0).toUpperCase() + str.slice(1);
+    }
   }
 
   /**

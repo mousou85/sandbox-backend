@@ -1,6 +1,6 @@
 import {Injectable} from '@nestjs/common';
 import {DataSource} from 'typeorm';
-import {IInvestItemJoinOption, InvestItemRepository} from '@db/repository';
+import {IInvestItemCondition, IInvestItemJoinOption, InvestItemRepository} from '@db/repository';
 import {IFindAllResult, IQueryListOption} from '@db/db.interface';
 import {InvestItemEntity} from '@db/entity';
 
@@ -13,12 +13,12 @@ export class InvestItemService {
 
   /**
    * 상품 목록 반환
-   * @param groupIdx
+   * @param condition
    * @param listOption
    * @param joinOption
    */
   async getItemList(
-    groupIdx: number,
+    condition: IInvestItemCondition,
     listOption?: IQueryListOption,
     joinOption?: IInvestItemJoinOption
   ): Promise<IFindAllResult<InvestItemEntity>> {
@@ -31,7 +31,7 @@ export class InvestItemService {
     }
 
     return this.investItemRepository.findAllByCondition(
-      {group_idx: groupIdx},
+      condition,
       {getAll, pageSize, page, sort},
       joinOption
     );

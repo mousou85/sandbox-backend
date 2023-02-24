@@ -2,7 +2,7 @@ import {IsNotEmpty, MaxLength, ValidateNested} from 'class-validator';
 import {Expose, Transform, Type} from 'class-transformer';
 import {DtoTransform} from '@common/dto.transform';
 import {IsDateString, IsInt} from '@common/decorator/validate';
-import {ApiExtraModels, ApiProperty, getSchemaPath} from '@nestjs/swagger';
+import {ApiExtraModels, ApiProperty, getSchemaPath, PickType} from '@nestjs/swagger';
 import {InvestGroupEntity} from '@db/entity';
 import {DefaultDto} from '@common/dto';
 import {InvestItemDto} from '@app/invest/dto';
@@ -59,3 +59,8 @@ export class InvestGroupDto extends DefaultDto {
     }
   }
 }
+
+/**
+ * 상품 그룹 생성 DTO
+ */
+export class CreateInvestGroupDto extends PickType(InvestGroupDto, ['groupName'] as const) {}

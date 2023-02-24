@@ -62,7 +62,7 @@ export class UserService {
       {user_idx: userIdx},
       {passwordSalt: true}
     );
-    if (!userEntity) throw new DataNotFoundException('user data not found');
+    if (!userEntity) throw new DataNotFoundException('user');
 
     return this.verifyPassword(password, userEntity.userPasswordSalt.salt, userEntity.password);
   }
@@ -76,7 +76,7 @@ export class UserService {
     //set vars: 유저 데이터
     const userEntity = await this.userRepository.findByCondition({user_idx: userIdx});
     if (!userEntity) {
-      throw new DataNotFoundException('user data not found');
+      throw new DataNotFoundException('user');
     }
 
     //set vars: 새 비밀번호 암호화
@@ -152,7 +152,7 @@ export class UserService {
     //set vars: 유저 데이터
     const userEntity = await this.userRepository.findByCondition({user_idx: userIdx});
     if (!userEntity) {
-      throw new DataNotFoundException('user data not found');
+      throw new DataNotFoundException('user');
     }
 
     //트랜잭션 처리
@@ -186,13 +186,13 @@ export class UserService {
     //set vars: 유저 데이터
     const userEntity = await this.userRepository.findByCondition({user_idx: userIdx});
     if (!userEntity) {
-      throw new DataNotFoundException('user data not found');
+      throw new DataNotFoundException('user');
     }
 
     //set vars: OTP secret 데이터
     const otpEntity = await this.userRepository.getOtpSecret(userIdx);
     if (!otpEntity) {
-      throw new DataNotFoundException('user otp data not found');
+      throw new DataNotFoundException('user');
     }
 
     //트랜잭션 처리
@@ -227,7 +227,7 @@ export class UserService {
     //set vars: 유저 데이터
     const userEntity = await this.userRepository.findByCondition({user_idx: userIdx});
     if (!userEntity) {
-      throw new DataNotFoundException('user data not found');
+      throw new DataNotFoundException('user');
     }
 
     //업데이트

@@ -8,6 +8,10 @@ import {IFindAllResult, IQueryListOption} from '@db/db.interface';
 export interface IInvestGroupCondition {
   group_idx?: number;
   user_idx?: number;
+  group_name?: {
+    op: 'match' | 'like';
+    value: string;
+  };
 }
 
 export interface IInvestGroupJoinOption {
@@ -40,11 +44,22 @@ export class InvestGroupRepository extends BaseRepository<InvestGroupEntity> {
     queryBuilder: SelectQueryBuilder<InvestGroupEntity>,
     condition: IInvestGroupCondition
   ) {
-    if (condition.group_idx) {
-      queryBuilder.andWhere('group.group_idx = :group_idx', {group_idx: condition.group_idx});
+    const {group_idx, user_idx, group_name} = condition;
+
+    if (group_idx) {
+      queryBuilder.andWhere('group.group_idx = :group_idx', {group_idx});
     }
-    if (condition.user_idx) {
-      queryBuilder.andWhere('group.user_idx = :user_idx', {user_idx: condition.user_idx});
+    if (user_idx) {
+      queryBuilder.andWhere('group.user_idx = :user_idx', {user_idx});
+    }
+    if (group_name) {
+      if (group_name.op == 'match') {
+        queryBuilder.andWhere('group.group_name = :group_name', {group_name: group_name.value});
+      } else {
+        queryBuilder.andWhere('group.group_name LIKE :group_name', {
+          group_name: `%${group_name.value}%`,
+        });
+      }
     }
 
     return queryBuilder;
