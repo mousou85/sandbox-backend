@@ -4,6 +4,7 @@ import {InvestGroupEntity} from '@db/entity';
 import {InjectRepository} from '@nestjs/typeorm';
 import {Repository, SelectQueryBuilder} from 'typeorm';
 import {IFindAllResult, IQueryListOption} from '@db/db.interface';
+import {TypeOrmHelper} from '@common/helper';
 
 export interface IInvestGroupCondition {
   group_idx?: number;
@@ -56,8 +57,9 @@ export class InvestGroupRepository extends BaseRepository<InvestGroupEntity> {
       if (group_name.op == 'match') {
         queryBuilder.andWhere('group.group_name = :group_name', {group_name: group_name.value});
       } else {
-        queryBuilder.andWhere('group.group_name LIKE :group_name', {
-          group_name: `%${group_name.value}%`,
+        TypeOrmHelper.addLikeClause(queryBuilder, 'group.group_name', group_name.value, {
+          paramName: 'group_name',
+          operator: 'and',
         });
       }
     }
