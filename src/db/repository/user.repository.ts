@@ -81,6 +81,10 @@ export class UserRepository extends BaseRepository<UserEntity> {
     return super.existsBy(condition);
   }
 
+  async countByCondition(condition: IUserCondition): Promise<number> {
+    return super.countByCondition(condition);
+  }
+
   async findByCondition(
     condition: IUserCondition,
     joinOption?: IUserJoinOption

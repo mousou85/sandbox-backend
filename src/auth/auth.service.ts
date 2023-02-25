@@ -13,8 +13,8 @@ import {AuthUserDto} from '@app/auth/dto';
 @Injectable()
 export class AuthService {
   constructor(
-    public readonly userRepository: UserRepository,
-    public readonly userLoginLogRepository: UserLoginLogRepository,
+    protected userRepository: UserRepository,
+    protected userLoginLogRepository: UserLoginLogRepository,
     protected userService: UserService,
     protected jwtService: JwtService,
     @Inject(jwtConfigBase.KEY) protected jwtConfig: ConfigType<typeof jwtConfigBase>

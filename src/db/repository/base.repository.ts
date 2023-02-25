@@ -31,6 +31,17 @@ export abstract class BaseRepository<Entity extends BaseEntity> extends Reposito
   }
 
   /**
+   * 데이터 갯수
+   * - 커스텀된 select query builder 사용
+   * @param condition
+   */
+  async countByCondition<CondType>(condition: CondType): Promise<number> {
+    let queryBuilder = this.getCustomQueryBuilder();
+    queryBuilder = this.setQueryBuilderCondition<CondType>(queryBuilder, condition);
+    return await queryBuilder.getCount();
+  }
+
+  /**
    * 조건에 해당하는 레코드 하나 반환
    * - 커스텀된 select query builder 사용
    * @param condition 조건

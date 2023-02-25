@@ -52,6 +52,10 @@ export class InvestUnitRepository extends BaseRepository<InvestUnitEntity> {
     return super.existsBy(condition);
   }
 
+  async countByCondition(condition: IInvestUnitCondition): Promise<number> {
+    return super.countByCondition(condition);
+  }
+
   async findByCondition(
     condition: IInvestUnitCondition,
     joinOption?: IInvestUnitJoinOption

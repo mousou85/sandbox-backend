@@ -52,6 +52,14 @@ export class UserLoginLogRepository extends BaseRepository<UserLoginLogEntity> {
     return queryBuilder;
   }
 
+  async existsBy(condition: IUserLoginLogCondition): Promise<boolean> {
+    return super.existsBy(condition);
+  }
+
+  async countByCondition(condition: IUserLoginLogCondition): Promise<number> {
+    return super.countByCondition(condition);
+  }
+
   async findByCondition(condition: IUserLoginLogCondition): Promise<UserLoginLogEntity | null> {
     return super.findByCondition(condition);
   }

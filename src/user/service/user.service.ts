@@ -12,8 +12,8 @@ import * as qrcode from 'qrcode';
 export class UserService {
   constructor(
     protected dataSource: DataSource,
-    public readonly userRepository: UserRepository,
-    public readonly loginLogRepository: UserLoginLogRepository
+    protected userRepository: UserRepository,
+    protected loginLogRepository: UserLoginLogRepository
   ) {}
 
   /**

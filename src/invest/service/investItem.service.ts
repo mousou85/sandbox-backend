@@ -8,7 +8,7 @@ import {InvestItemEntity} from '@db/entity';
 export class InvestItemService {
   constructor(
     protected dataSource: DataSource,
-    public readonly investItemRepository: InvestItemRepository
+    protected investItemRepository: InvestItemRepository
   ) {}
 
   /**
@@ -17,6 +17,10 @@ export class InvestItemService {
    */
   async hasItem(condition: IInvestItemCondition): Promise<boolean> {
     return this.investItemRepository.existsBy(condition);
+  }
+
+  async getItemCount(condition: IInvestItemCondition): Promise<number> {
+    return this.investItemRepository.countByCondition(condition);
   }
 
   /**

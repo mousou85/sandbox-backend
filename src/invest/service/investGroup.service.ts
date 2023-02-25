@@ -2,7 +2,7 @@ import {Injectable} from '@nestjs/common';
 import {DataSource} from 'typeorm';
 import {IInvestGroupCondition, IInvestGroupJoinOption, InvestGroupRepository} from '@db/repository';
 import {IFindAllResult, IQueryListOption} from '@db/db.interface';
-import {InvestGroupEntity} from '@db/entity';
+import {InvestGroupEntity, InvestGroupItemEntity} from '@db/entity';
 import {CreateInvestGroupDto, UpdateInvestGroupDto} from '@app/invest/dto';
 import {DataNotFoundException} from '@common/exception';
 
@@ -10,7 +10,7 @@ import {DataNotFoundException} from '@common/exception';
 export class InvestGroupService {
   constructor(
     protected dataSource: DataSource,
-    public readonly investGroupRepository: InvestGroupRepository
+    protected investGroupRepository: InvestGroupRepository
   ) {}
 
   /**
@@ -97,5 +97,48 @@ export class InvestGroupService {
     if (!hasData) throw new DataNotFoundException('invest group');
 
     await this.investGroupRepository.delete({group_idx: groupIdx});
+  }
+
+  /**
+   * 상품 그룹에 상품 추가
+   * @param groupIdx 그룹 idx
+   * @param itemIdxs 추가할 상품 idx 목록
+   */
+  async addItem(groupIdx: number, itemIdxs: number[]): Promise<void> {
+    //그룹 유무 체크
+    const hasGroup = await this.investGroupRepository.existsBy({group_idx: groupIdx});
+    if (!hasGroup) throw new DataNotFoundException('invest group');
+
+    //트랜잭션 처리
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+    try {
+      const entityManager = queryRunner.manager;
+
+      for (const itemIdx of itemIdxs) {
+        //이미 추가된 상품인지 확인
+        const alreadyAddedItem = entityManager.exists(InvestGroupItemEntity, {
+          where: {
+            group_idx: groupIdx,
+            item_idx: itemIdx,
+          },
+        });
+        if (alreadyAddedItem) continue;
+
+        //그룹에 상품 추가
+        const entity = new InvestGroupItemEntity();
+        entity.group_idx = groupIdx;
+        entity.item_idx = itemIdx;
+        await entityManager.save(entity, {reload: false});
+      }
+
+      await queryRunner.commitTransaction();
+    } catch (err) {
+      await queryRunner.rollbackTransaction();
+      throw err;
+    } finally {
+      await queryRunner.release();
+    }
   }
 }

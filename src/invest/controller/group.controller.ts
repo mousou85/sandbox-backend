@@ -10,6 +10,7 @@ import {
   Logger,
   LoggerService,
   Param,
+  ParseArrayPipe,
   ParseIntPipe,
   Patch,
   Post,
@@ -18,7 +19,7 @@ import {
 import {JwtAuthGuard} from '@app/auth/authGuard';
 import {User} from '@app/auth/auth.decorator';
 import {AuthUserDto} from '@app/auth/dto';
-import {InvestGroupService, InvestItemService, InvestUnitService} from '@app/invest/service';
+import {InvestGroupService, InvestItemService} from '@app/invest/service';
 import {
   CreateInvestGroupDto,
   InvestGroupDto,
@@ -27,7 +28,7 @@ import {
   InvestUnitDto,
   UpdateInvestGroupDto,
 } from '@app/invest/dto';
-import {ApiListResponse, ApiOkResponseCustom} from '@common/decorator/swagger';
+import {ApiBodyCustom, ApiListResponse, ApiOkResponseCustom} from '@common/decorator/swagger';
 import {ListResponseDto, OkResponseDto} from '@common/dto';
 import {RequiredPipe} from '@common/pipe';
 import {DataNotFoundException} from '@common/exception';
@@ -40,8 +41,7 @@ export class GroupController {
   constructor(
     @Inject(Logger) private logger: LoggerService,
     private investGroupService: InvestGroupService,
-    private investItemService: InvestItemService,
-    private investUnitService: InvestUnitService
+    private investItemService: InvestItemService
   ) {}
 
   @ApiOperation({summary: '상품 그룹 리스트 조회'})
@@ -203,6 +203,46 @@ export class GroupController {
 
     //그룹 삭제
     await this.investGroupService.deleteGroup(groupIdx);
+
+    return new OkResponseDto();
+  }
+
+  @ApiOperation({summary: '그룹에 상품 추가'})
+  @ApiParam({name: 'groupIdx', description: '그룹 IDX', type: 'number', required: true})
+  @ApiBodyCustom({
+    itemIdxs: {
+      description: '그룹에 추가할 상품 IDX',
+      type: 'array',
+      items: {type: 'number'},
+      example: [1, 2, 3],
+    },
+  })
+  @ApiOkResponseCustom({model: null})
+  @Post('/:groupIdx(\\d+)/item')
+  @HttpCode(200)
+  async addItem(
+    @User() user: AuthUserDto,
+    @Param('groupIdx', new RequiredPipe(), new ParseIntPipe()) groupIdx: number,
+    @Body('itemIdxs', new RequiredPipe(), new ParseArrayPipe({items: Number})) itemIdxs: number[]
+  ): Promise<OkResponseDto<void>> {
+    //데이터 유무 체크
+    const hasData = await this.investGroupService.hasGroup({
+      group_idx: groupIdx,
+      user_idx: user.userIdx,
+    });
+    if (!hasData) throw new DataNotFoundException('invest group');
+
+    //본인 상품인지 확인
+    const itemCount = await this.investItemService.getItemCount({
+      user_idx: user.userIdx,
+      item_idx: itemIdxs,
+    });
+    if (itemIdxs.length != itemCount) {
+      throw new BadRequestException('There is an invalid item among the items to add to the group');
+    }
+
+    //그룹에 상품 추가
+    await this.investGroupService.addItem(groupIdx, itemIdxs);
 
     return new OkResponseDto();
   }
