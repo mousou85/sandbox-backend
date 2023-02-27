@@ -3,6 +3,9 @@ import {DataSource} from 'typeorm';
 import {IInvestItemCondition, IInvestItemJoinOption, InvestItemRepository} from '@db/repository';
 import {IFindAllResult, IQueryListOption} from '@db/db.interface';
 import {InvestItemEntity} from '@db/entity';
+import {EInvestItemType} from '@db/db.enum';
+
+export type TInvestItemType = {[V in EInvestItemType]?: string};
 
 @Injectable()
 export class InvestItemService {
@@ -10,6 +13,43 @@ export class InvestItemService {
     protected dataSource: DataSource,
     protected investItemRepository: InvestItemRepository
   ) {}
+
+  /**
+   * 상품 타입 리스트
+   */
+  static getItemTypeList(): TInvestItemType {
+    let retVal: TInvestItemType = {};
+    Object.values(EInvestItemType).forEach((typeKey) => {
+      let typeName;
+      switch (typeKey) {
+        case 'cash':
+          typeName = '현금';
+          break;
+        case 'deposit':
+          typeName = '예금';
+          break;
+        case 'saving':
+          typeName = '적금';
+          break;
+        case 'trade':
+          typeName = '매매';
+          break;
+        case 'future':
+          typeName = '선물';
+          break;
+        case 'defi':
+          typeName = '디파이';
+          break;
+        case 'p2p':
+        default:
+          typeName = 'P2P';
+      }
+
+      retVal[typeKey] = typeName;
+    });
+
+    return retVal;
+  }
 
   /**
    * 상품 유무 체크

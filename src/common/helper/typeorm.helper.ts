@@ -20,7 +20,7 @@ export class TypeOrmHelper {
     const paramName = opts?.paramName ?? column.replace(/\./g, '_');
 
     const query = `${column} IN (:...${paramName})`;
-    const param = {[paramName]: `%${value}%`};
+    const param = {[paramName]: value};
 
     operator == 'and' ? queryBuilder.andWhere(query, param) : queryBuilder.orWhere(query, param);
   }

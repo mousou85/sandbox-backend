@@ -10,7 +10,7 @@ import {
   PrimaryGeneratedColumn,
 } from 'typeorm';
 import {InvestGroupEntity, InvestUnitEntity, UserEntity} from '@db/entity';
-import {EYNState} from '@db/db.enum';
+import {EInvestItemType, EYNState} from '@db/db.enum';
 import {DateTransformer} from '@db/transformer';
 
 @Entity('invest_item')
@@ -36,7 +36,7 @@ export class InvestItemEntity extends BaseEntity {
     length: 10,
     nullable: false,
   })
-  item_type: string;
+  item_type: EInvestItemType;
 
   @Column({
     type: 'varchar',

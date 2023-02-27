@@ -53,7 +53,9 @@ export class InvestItemRepository extends BaseRepository<InvestItemEntity> {
 
     if (item_idx) {
       Array.isArray(item_idx)
-        ? TypeOrmHelper.addInClause(queryBuilder, '', item_idx, {paramName: 'item_idx'})
+        ? TypeOrmHelper.addInClause(queryBuilder, 'item.item_idx', item_idx, {
+            paramName: 'item_idx',
+          })
         : queryBuilder.andWhere('item.item_idx = :item_idx', {item_idx});
     }
     if (group_idx) {

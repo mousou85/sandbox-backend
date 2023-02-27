@@ -117,20 +117,58 @@ export class InvestGroupService {
       const entityManager = queryRunner.manager;
 
       for (const itemIdx of itemIdxs) {
-        //이미 추가된 상품인지 확인
-        const alreadyAddedItem = entityManager.exists(InvestGroupItemEntity, {
+        //그룹에 존재하는 상품인지 확인
+        const hasItem = await entityManager.exists(InvestGroupItemEntity, {
           where: {
             group_idx: groupIdx,
             item_idx: itemIdx,
           },
         });
-        if (alreadyAddedItem) continue;
+        if (hasItem) continue;
 
         //그룹에 상품 추가
         const entity = new InvestGroupItemEntity();
         entity.group_idx = groupIdx;
         entity.item_idx = itemIdx;
         await entityManager.save(entity, {reload: false});
+      }
+
+      await queryRunner.commitTransaction();
+    } catch (err) {
+      await queryRunner.rollbackTransaction();
+      throw err;
+    } finally {
+      await queryRunner.release();
+    }
+  }
+
+  /**
+   * 상품 그룹에 상품 제거
+   * @param groupIdx 그룹 idx
+   * @param itemIdxs 제거할 상품 idx 목록
+   */
+  async removeItem(groupIdx: number, itemIdxs: number[]): Promise<void> {
+    //그룹 유무 체크
+    const hasGroup = await this.investGroupRepository.existsBy({group_idx: groupIdx});
+    if (!hasGroup) throw new DataNotFoundException('invest group');
+
+    //트랜잭션 처리
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+    try {
+      const entityManager = queryRunner.manager;
+
+      for (const itemIdx of itemIdxs) {
+        //set vars: 데이터
+        const entity = await entityManager.findOneBy(InvestGroupItemEntity, {
+          group_idx: groupIdx,
+          item_idx: itemIdx,
+        });
+        if (!entity) continue;
+
+        //그룹에 상품 제거
+        await entityManager.remove(entity);
       }
 
       await queryRunner.commitTransaction();

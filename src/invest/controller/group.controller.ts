@@ -246,4 +246,43 @@ export class GroupController {
 
     return new OkResponseDto();
   }
+
+  @ApiOperation({summary: '그룹에 상품 제거'})
+  @ApiParam({name: 'groupIdx', description: '그룹 IDX', type: 'number', required: true})
+  @ApiBodyCustom({
+    itemIdxs: {
+      description: '그룹에서 제거할 상품 IDX',
+      type: 'array',
+      items: {type: 'number'},
+      example: [1, 2, 3],
+    },
+  })
+  @ApiOkResponseCustom({model: null})
+  @Delete('/:groupIdx(\\d+)/item')
+  async removeItem(
+    @User() user: AuthUserDto,
+    @Param('groupIdx', new RequiredPipe(), new ParseIntPipe()) groupIdx: number,
+    @Body('itemIdxs', new RequiredPipe(), new ParseArrayPipe({items: Number})) itemIdxs: number[]
+  ): Promise<OkResponseDto<void>> {
+    //데이터 유무 체크
+    const hasData = await this.investGroupService.hasGroup({
+      group_idx: groupIdx,
+      user_idx: user.userIdx,
+    });
+    if (!hasData) throw new DataNotFoundException('invest group');
+
+    //본인 상품인지 확인
+    const itemCount = await this.investItemService.getItemCount({
+      user_idx: user.userIdx,
+      item_idx: itemIdxs,
+    });
+    if (itemIdxs.length != itemCount) {
+      throw new BadRequestException('There is an invalid item among the items to add to the group');
+    }
+
+    //그룹에 상품 제거
+    await this.investGroupService.removeItem(groupIdx, itemIdxs);
+
+    return new OkResponseDto();
+  }
 }

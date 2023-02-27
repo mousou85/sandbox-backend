@@ -54,3 +54,17 @@ export const EInvestUnitType = {
   float: 'float',
 } as const;
 export type EInvestUnitType = (typeof EInvestUnitType)[keyof typeof EInvestUnitType];
+
+/**
+ * 투자 상품 타입
+ */
+export const EInvestItemType = {
+  cash: 'cash',
+  deposit: 'deposit',
+  saving: 'saving',
+  trade: 'trade',
+  future: 'future',
+  defi: 'defi',
+  p2p: 'p2p',
+} as const;
+export type EInvestItemType = (typeof EInvestItemType)[keyof typeof EInvestItemType];

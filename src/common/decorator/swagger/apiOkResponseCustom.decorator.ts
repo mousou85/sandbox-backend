@@ -1,6 +1,10 @@
 import {applyDecorators, Type} from '@nestjs/common';
 import {OkResponseDto} from '@common/dto';
 import {ApiExtraModels, ApiOkResponse, ApiResponseOptions, getSchemaPath} from '@nestjs/swagger';
+import {
+  ReferenceObject,
+  SchemaObject,
+} from '@nestjs/swagger/dist/interfaces/open-api-spec.interface';
 
 /**
  * swagger 성공 결과 값 데코레이터
@@ -8,8 +12,9 @@ import {ApiExtraModels, ApiOkResponse, ApiResponseOptions, getSchemaPath} from '
 export const ApiOkResponseCustom = <T extends Type<any>>(options?: {
   description?: string;
   model?: T | T[];
+  customProperties?: Record<string, SchemaObject | ReferenceObject>;
 }): MethodDecorator => {
-  const {description, model} = options;
+  const {description, model, customProperties} = options;
 
   //set vars: 적용할 데코레이터 목록
   const decoratorList = [];
@@ -40,6 +45,9 @@ export const ApiOkResponseCustom = <T extends Type<any>>(options?: {
     }
 
     apiOptions.schema.allOf.push(dataProperty);
+  }
+  if (customProperties) {
+    apiOptions.schema.allOf.push({properties: {data: {properties: customProperties}}});
   }
 
   decoratorList.push(ApiOkResponse(apiOptions));
