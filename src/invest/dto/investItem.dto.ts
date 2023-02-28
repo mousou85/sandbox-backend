@@ -1,4 +1,4 @@
-import {EYNState} from '@db/db.enum';
+import {EInvestItemType, EYNState} from '@db/db.enum';
 import {Expose, Transform, Type} from 'class-transformer';
 import {ApiExtraModels, ApiProperty, getSchemaPath} from '@nestjs/swagger';
 import {IsDateString, IsEnum, IsInt} from '@common/decorator/validate';
@@ -7,6 +7,7 @@ import {DtoTransform} from '@common/dto.transform';
 import {InvestItemEntity} from '@db/entity';
 import {DefaultDto} from '@common/dto';
 import {InvestUnitDto} from '@app/invest/dto';
+import {EInvestItemTypeLabel} from '@app/invest/invest.enum';
 
 /**
  * 투자 상품 DTO
@@ -20,11 +21,12 @@ export class InvestItemDto extends DefaultDto {
   @Transform(({value}) => DtoTransform.parseInt(value))
   itemIdx: number;
 
-  @ApiProperty({description: '상품 타입', required: true})
+  @ApiProperty({description: '상품 타입', required: true, enum: EInvestItemType})
   @Expose()
+  @IsEnum(EInvestItemType, {allowEmptyString: false})
   @IsNotEmpty()
   @Transform(({value}) => DtoTransform.trim(value))
-  itemType: string;
+  itemType: EInvestItemType;
 
   @ApiProperty({description: '상품명', required: true})
   @Expose()
@@ -69,6 +71,13 @@ export class InvestItemDto extends DefaultDto {
   @IsInt()
   get unitCount(): number {
     return Array.isArray(this.unitList) ? this.unitList.length : 0;
+  }
+
+  @ApiProperty({description: '상품 타입 라벨', required: true, enum: EInvestItemTypeLabel})
+  @Expose()
+  @IsEnum(EInvestItemTypeLabel, {allowEmptyString: false})
+  get itemTypeLabel(): EInvestItemTypeLabel {
+    return this.itemType ? EInvestItemTypeLabel[this.itemType] : undefined;
   }
 
   constructor(investItemEntity?: InvestItemEntity) {
