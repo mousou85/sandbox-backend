@@ -1,11 +1,12 @@
+import {ApiExtraModels, ApiProperty, PickType} from '@nestjs/swagger';
+import {Expose, Transform} from 'class-transformer';
 import {IsNotEmpty, MaxLength, ValidateNested} from 'class-validator';
-import {Expose, Transform, Type} from 'class-transformer';
-import {DtoTransform} from '@common/dto.transform';
-import {IsDateString, IsInt} from '@common/decorator/validate';
-import {ApiExtraModels, ApiProperty, getSchemaPath, PickType} from '@nestjs/swagger';
-import {InvestGroupEntity} from '@db/entity';
-import {DefaultDto} from '@common/dto';
+
 import {InvestItemDto} from '@app/invest/dto';
+import {IsDateString, IsInt} from '@common/decorator/validate';
+import {DefaultDto} from '@common/dto';
+import {DtoTransform} from '@common/dto.transform';
+import {InvestGroupEntity} from '@db/entity';
 
 /**
  * 상품 그룹 DTO(심플)
@@ -45,17 +46,15 @@ export class InvestGroupDtoSimple extends DefaultDto {
 /**
  * 상품 그룹 DTO
  */
-@ApiExtraModels(InvestItemDto)
+@ApiExtraModels(() => InvestItemDto)
 export class InvestGroupDto extends InvestGroupDtoSimple {
   @ApiProperty({
     description: '소속 상품 목록',
-    type: 'array',
-    items: {$ref: getSchemaPath(InvestItemDto)},
+    type: () => [InvestItemDto],
     required: true,
   })
   @Expose()
   @ValidateNested({each: true})
-  @Type(() => InvestItemDto)
   itemList: InvestItemDto[] = [];
 
   @ApiProperty({description: '소속된 상품 갯수', required: true})

@@ -1,19 +1,19 @@
-import {EInvestItemType, EYNState} from '@db/db.enum';
-import {Expose, Transform, Type} from 'class-transformer';
-import {ApiExtraModels, ApiProperty, getSchemaPath} from '@nestjs/swagger';
-import {IsDateString, IsEnum, IsInt} from '@common/decorator/validate';
-import {IsNotEmpty, IsOptional, ValidateNested} from 'class-validator';
-import {DtoTransform} from '@common/dto.transform';
-import {InvestItemEntity} from '@db/entity';
-import {DefaultDto} from '@common/dto';
-import {InvestUnitDto} from '@app/invest/dto';
+import {ApiExtraModels, ApiProperty, IntersectionType, PickType} from '@nestjs/swagger';
+import {Expose, Transform} from 'class-transformer';
+import {IsNotEmpty, IsOptional, MaxLength, ValidateNested} from 'class-validator';
+
+import {InvestGroupDtoSimple, InvestUnitDto} from '@app/invest/dto';
 import {EInvestItemTypeLabel} from '@app/invest/invest.enum';
+import {IsDateString, IsEnum, IsInt} from '@common/decorator/validate';
+import {DefaultDto} from '@common/dto';
+import {DtoTransform} from '@common/dto.transform';
+import {EInvestItemType, EYNState} from '@db/db.enum';
+import {InvestItemEntity} from '@db/entity';
 
 /**
- * 투자 상품 DTO
+ * 상품 그룹 DTO(심플)
  */
-@ApiExtraModels(InvestUnitDto)
-export class InvestItemDto extends DefaultDto {
+export class InvestItemDtoSimple extends DefaultDto {
   @ApiProperty({description: '상품 IDX', required: true})
   @Expose()
   @IsInt({allowEmptyString: false})
@@ -30,6 +30,7 @@ export class InvestItemDto extends DefaultDto {
 
   @ApiProperty({description: '상품명', required: true})
   @Expose()
+  @MaxLength(50)
   @IsNotEmpty()
   @Transform(({value}) => DtoTransform.trim(value))
   itemName: string;
@@ -55,24 +56,6 @@ export class InvestItemDto extends DefaultDto {
   @Transform(({value}) => DtoTransform.parseDate(value))
   closedAt?: string;
 
-  @ApiProperty({
-    description: '단위 목록',
-    type: 'array',
-    items: {$ref: getSchemaPath(InvestUnitDto)},
-    required: true,
-  })
-  @Expose()
-  @ValidateNested({each: true})
-  @Type(() => InvestUnitDto)
-  unitList: InvestUnitDto[] = [];
-
-  @ApiProperty({description: '사용가능한 단위 갯수', required: true})
-  @Expose()
-  @IsInt()
-  get unitCount(): number {
-    return Array.isArray(this.unitList) ? this.unitList.length : 0;
-  }
-
   @ApiProperty({description: '상품 타입 라벨', required: true, enum: EInvestItemTypeLabel})
   @Expose()
   @IsEnum(EInvestItemTypeLabel, {allowEmptyString: false})
@@ -92,3 +75,37 @@ export class InvestItemDto extends DefaultDto {
     }
   }
 }
+
+/**
+ * 투자 상품 DTO
+ */
+@ApiExtraModels(() => InvestUnitDto)
+export class InvestItemDto extends InvestItemDtoSimple {
+  @ApiProperty({
+    description: '단위 목록',
+    type: () => [InvestUnitDto],
+    required: true,
+  })
+  @Expose()
+  @ValidateNested({each: true})
+  unitList: InvestUnitDto[] = [];
+
+  @ApiProperty({description: '사용가능한 단위 갯수', required: true})
+  @Expose()
+  @IsInt()
+  get unitCount(): number {
+    return Array.isArray(this.unitList) ? this.unitList.length : 0;
+  }
+
+  constructor(investItemEntity?: InvestItemEntity) {
+    super(investItemEntity);
+  }
+}
+
+/**
+ * 상품 생성 DTO
+ */
+export class CreateInvestItemDto extends IntersectionType(
+  PickType(InvestItemDtoSimple, ['itemType', 'itemName'] as const),
+  PickType(InvestGroupDtoSimple, ['groupIdx'] as const)
+) {}

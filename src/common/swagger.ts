@@ -1,6 +1,7 @@
 import {INestApplication} from '@nestjs/common';
-import {swaggerConfig} from '@config';
 import {DocumentBuilder, SwaggerModule} from '@nestjs/swagger';
+
+import {swaggerConfig} from '@config';
 
 export const enableSwaggerModule = (app: INestApplication) => {
   for (const item of swaggerConfig) {

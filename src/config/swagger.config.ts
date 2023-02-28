@@ -1,6 +1,6 @@
 import {AuthModule} from '@app/auth/auth.module';
-import {UserModule} from '@app/user/user.module';
 import {InvestModule} from '@app/invest/invest.module';
+import {UserModule} from '@app/user/user.module';
 
 export const swaggerConfig = [
   {

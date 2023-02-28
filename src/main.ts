@@ -1,10 +1,12 @@
-import {NestFactory, Reflector} from '@nestjs/core';
-import {AppModule} from '@app/app.module';
 import * as process from 'process';
-import {createLogger} from '@common/logger';
+
 import {ClassSerializerInterceptor, ValidationPipe} from '@nestjs/common';
-import {GlobalExceptionFilter} from '@common/global';
+import {NestFactory, Reflector} from '@nestjs/core';
 import {ClsMiddleware} from 'nestjs-cls';
+
+import {AppModule} from '@app/app.module';
+import {GlobalExceptionFilter} from '@common/global';
+import {createLogger} from '@common/logger';
 import {clsIdGenerator, clsMiddlewareSetup} from '@common/middleware/cls.middleware';
 import {enableSwaggerModule} from '@common/swagger';
 
