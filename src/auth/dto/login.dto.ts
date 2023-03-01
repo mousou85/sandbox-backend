@@ -1,9 +1,10 @@
 import {ApiProperty} from '@nestjs/swagger';
 import {Expose, Transform} from 'class-transformer';
 import {IsBoolean, IsNotEmpty, MaxLength} from 'class-validator';
+
 import {IsEnum, IsInt} from '@common/decorator/validate';
-import {DtoTransform} from '@common/dto.transform';
 import {DefaultDto} from '@common/dto';
+import {DtoTransform} from '@common/dto.transform';
 import {EYNState} from '@db/db.enum';
 
 export class LoginSuccessDto extends DefaultDto {

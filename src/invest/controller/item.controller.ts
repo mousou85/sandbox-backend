@@ -30,8 +30,8 @@ import {
   InvestUnitDto,
 } from '@app/invest/dto';
 import {EInvestItemTypeLabel} from '@app/invest/invest.enum';
-import {InvestItemService} from '@app/invest/service';
-import {ApiListResponse, ApiOkResponseCustom} from '@common/decorator/swagger';
+import {InvestGroupService, InvestItemService} from '@app/invest/service';
+import {ApiConsumesCustom, ApiListResponse, ApiOkResponseCustom} from '@common/decorator/swagger';
 import {ListResponseDto, OkResponseDto} from '@common/dto';
 import {DataNotFoundException} from '@common/exception';
 import {RequiredPipe} from '@common/pipe';
@@ -43,7 +43,8 @@ import {RequiredPipe} from '@common/pipe';
 export class ItemController {
   constructor(
     @Inject(Logger) private logger: LoggerService,
-    private investItemService: InvestItemService
+    private investItemService: InvestItemService,
+    private investGroupService: InvestGroupService
   ) {}
 
   @ApiOperation({summary: '상품 타입 리스트 조회'})
@@ -114,9 +115,30 @@ export class ItemController {
   }
 
   @ApiOperation({summary: '상품 데이터 추가'})
+  @ApiConsumesCustom()
   @ApiBody({type: CreateInvestItemDto})
   @ApiOkResponseCustom({model: InvestItemDtoSimple})
   @Post('/')
   @HttpCode(200)
-  async createItem(@User() user: AuthUserDto, @Body() createDto: CreateInvestItemDto) {}
+  async createItem(
+    @User() user: AuthUserDto,
+    @Body() createDto: CreateInvestItemDto
+  ): Promise<OkResponseDto<InvestItemDtoSimple>> {
+    //그룹 idx 있으면 그룹 유무 체크
+    if (createDto.groupIdx) {
+      const hasGroup = await this.investGroupService.hasGroup({
+        group_idx: createDto.groupIdx,
+        user_idx: user.userIdx,
+      });
+      if (!hasGroup) throw new DataNotFoundException('invest group');
+    }
+
+    //상품 insert
+    const itemEntity = await this.investItemService.createItem(user.userIdx, createDto);
+
+    //set vars: dto
+    const itemDto = new InvestItemDtoSimple(itemEntity);
+
+    return new OkResponseDto(itemDto);
+  }
 }

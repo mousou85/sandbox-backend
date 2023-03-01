@@ -1,6 +1,7 @@
-import {CommonHelper} from '@common/helper';
+import {isEmpty} from 'class-validator';
 import dayjs from 'dayjs';
-import {isDefined} from 'class-validator';
+
+import {CommonHelper} from '@common/helper';
 
 export class DtoTransform {
   /**
@@ -28,14 +29,14 @@ export class DtoTransform {
    * 정수 변환
    */
   static parseInt(value: string): number {
-    return isDefined(value) ? parseInt(value) : undefined;
+    return isEmpty(value) ? undefined : parseInt(value);
   }
 
   /**
    * 실수 변환
    */
   static parseFloat(value: string, precision?: number): number {
-    if (!isDefined(value)) return undefined;
+    if (isEmpty(value)) return undefined;
     let parseValue = parseFloat(value);
     return precision > 0 ? parseFloat(parseValue.toFixed(precision)) : parseValue;
   }
@@ -45,8 +46,8 @@ export class DtoTransform {
    * @param value
    * @param format 날짜 포맷(default: YYYY-MM-DD HH:mm:ss)
    */
-  static parseDate(value: any, format: string = 'YYYY-MM-DD HH:mm:ss'): string {
-    if (!isDefined(value)) return undefined;
+  static parseDate(value: any, format = 'YYYY-MM-DD HH:mm:ss'): string {
+    if (isEmpty(value)) return undefined;
     return dayjs(value).format(format);
   }
 

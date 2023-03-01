@@ -1,14 +1,23 @@
 import {Injectable} from '@nestjs/common';
 import {DataSource} from 'typeorm';
-import {IInvestItemCondition, IInvestItemJoinOption, InvestItemRepository} from '@db/repository';
+
+import {CreateInvestItemDto} from '@app/invest/dto';
+import {DataNotFoundException} from '@common/exception';
 import {IFindAllResult, IQueryListOption} from '@db/db.interface';
-import {InvestItemEntity} from '@db/entity';
+import {InvestGroupEntity, InvestGroupItemEntity, InvestItemEntity} from '@db/entity';
+import {
+  IInvestItemCondition,
+  IInvestItemJoinOption,
+  InvestGroupRepository,
+  InvestItemRepository,
+} from '@db/repository';
 
 @Injectable()
 export class InvestItemService {
   constructor(
     protected dataSource: DataSource,
-    protected investItemRepository: InvestItemRepository
+    protected investItemRepository: InvestItemRepository,
+    protected investGroupRepository: InvestGroupRepository
   ) {}
 
   /**
@@ -63,5 +72,53 @@ export class InvestItemService {
       {getAll, pageSize, page, sort},
       joinOption
     );
+  }
+
+  /**
+   * 상픔 그룹 생성
+   * @param userIdx
+   * @param createDto
+   */
+  async createItem(userIdx: number, createDto: CreateInvestItemDto): Promise<InvestItemEntity> {
+    //그룹 idx있으면 그룹 체크
+    if (createDto.groupIdx) {
+    }
+
+    //트랜잭션 처리
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+    try {
+      const entityManager = queryRunner.manager;
+
+      //상품 insert
+      const itemEntity = this.investItemRepository.create();
+      itemEntity.user_idx = userIdx;
+      itemEntity.item_type = createDto.itemType;
+      itemEntity.item_name = createDto.itemName;
+      await entityManager.save(itemEntity);
+
+      //그룹 idx있으면 그룹에 추가
+      if (createDto.groupIdx) {
+        const hasGroup = await entityManager.exists(InvestGroupEntity, {
+          where: {group_idx: createDto.groupIdx},
+        });
+        if (!hasGroup) throw new DataNotFoundException('invest group');
+
+        const groupItemEntity = new InvestGroupItemEntity();
+        groupItemEntity.group_idx = createDto.groupIdx;
+        groupItemEntity.item_idx = itemEntity.item_idx;
+        await entityManager.save(groupItemEntity, {reload: false});
+      }
+
+      await queryRunner.commitTransaction();
+
+      return itemEntity;
+    } catch (err) {
+      await queryRunner.rollbackTransaction();
+      throw err;
+    } finally {
+      await queryRunner.release();
+    }
   }
 }

@@ -1,14 +1,15 @@
 import {forwardRef, Logger, Module} from '@nestjs/common';
-import {DbModule} from '@db/db.module';
-import {UserModule} from '@app/user/user.module';
+import {ConfigType} from '@nestjs/config';
+import {JwtModule} from '@nestjs/jwt';
+import {PassportModule} from '@nestjs/passport';
+
 import {AuthController} from '@app/auth/auth.controller';
 import {AuthService} from '@app/auth/auth.service';
-import {JwtModule} from '@nestjs/jwt';
-import {ConfigModule as AppConfigModule} from '@config/config.module';
 import {JwtStrategy, LocalStrategy} from '@app/auth/strategy';
-import {ConfigType} from '@nestjs/config';
+import {UserModule} from '@app/user/user.module';
+import {ConfigModule as AppConfigModule} from '@config/config.module';
 import {jwtConfig} from '@config/jwt.config';
-import {PassportModule} from '@nestjs/passport';
+import {DbModule} from '@db/db.module';
 
 @Module({
   imports: [

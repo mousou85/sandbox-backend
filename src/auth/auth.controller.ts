@@ -9,9 +9,11 @@ import {
   UnauthorizedException,
   UseGuards,
 } from '@nestjs/common';
+import {ApiBody, ApiOperation, ApiTags} from '@nestjs/swagger';
+
+import {User} from '@app/auth/auth.decorator';
 import {AuthService} from '@app/auth/auth.service';
 import {LocalAuthGuard} from '@app/auth/authGuard';
-import {User} from '@app/auth/auth.decorator';
 import {
   AuthUserDto,
   LoginSuccessDto,
@@ -20,11 +22,10 @@ import {
   UserCredentialDto,
   UserOtpCredentialDto,
 } from '@app/auth/dto';
-import {OkResponseDto} from '@common/dto';
-import {ApiBody, ApiOperation, ApiTags} from '@nestjs/swagger';
-import {ApiBodyCustom, ApiOkResponseCustom} from '@common/decorator/swagger';
-import {RequiredPipe} from '@common/pipe';
 import {UserService} from '@app/user/service';
+import {ApiBodyCustom, ApiOkResponseCustom} from '@common/decorator/swagger';
+import {OkResponseDto} from '@common/dto';
+import {RequiredPipe} from '@common/pipe';
 
 @ApiTags('로그인/인증')
 @Controller('/auth')

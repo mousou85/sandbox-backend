@@ -24,6 +24,9 @@ module.exports = {
     '@typescript-eslint/explicit-function-return-type': 'off',
     '@typescript-eslint/explicit-module-boundary-types': 'off',
     '@typescript-eslint/no-explicit-any': 'off',
+    'prefer-const': 0,
+    'prettier/prettier': ['error', {endOfLine: 'auto'}],
+    '@typescript-eslint/ban-types': 0,
     'import/order': [
       'error',
       {

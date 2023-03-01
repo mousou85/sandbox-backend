@@ -29,7 +29,12 @@ import {
   UpdateInvestGroupDto,
 } from '@app/invest/dto';
 import {InvestGroupService, InvestItemService} from '@app/invest/service';
-import {ApiBodyCustom, ApiListResponse, ApiOkResponseCustom} from '@common/decorator/swagger';
+import {
+  ApiBodyCustom,
+  ApiConsumesCustom,
+  ApiListResponse,
+  ApiOkResponseCustom,
+} from '@common/decorator/swagger';
 import {ListResponseDto, OkResponseDto} from '@common/dto';
 import {DataNotFoundException} from '@common/exception';
 import {RequiredPipe} from '@common/pipe';
@@ -131,6 +136,7 @@ export class GroupController {
   }
 
   @ApiOperation({summary: '그룹 데이터 추가'})
+  @ApiConsumesCustom()
   @ApiBody({type: CreateInvestGroupDto})
   @ApiOkResponseCustom({model: InvestGroupDtoSimple})
   @Post('/')
@@ -158,6 +164,7 @@ export class GroupController {
   }
 
   @ApiOperation({summary: '그룹 데이터 수정'})
+  @ApiConsumesCustom()
   @ApiParam({name: 'groupIdx', description: '그룹 IDX', type: 'number', required: true})
   @ApiBody({type: UpdateInvestGroupDto})
   @ApiOkResponseCustom({model: InvestGroupDtoSimple})

@@ -1,7 +1,8 @@
-import {PassportStrategy} from '@nestjs/passport';
-import {Strategy} from 'passport-custom';
-import {Request} from 'express';
 import {Injectable, UnauthorizedException} from '@nestjs/common';
+import {PassportStrategy} from '@nestjs/passport';
+import {Request} from 'express';
+import {Strategy} from 'passport-custom';
+
 import {AuthService} from '@app/auth/auth.service';
 import {AuthUserDto} from '@app/auth/dto';
 

@@ -1,4 +1,10 @@
-import {ApiExtraModels, ApiProperty, IntersectionType, PickType} from '@nestjs/swagger';
+import {
+  ApiExtraModels,
+  ApiProperty,
+  IntersectionType,
+  PartialType,
+  PickType,
+} from '@nestjs/swagger';
 import {Expose, Transform} from 'class-transformer';
 import {IsNotEmpty, IsOptional, MaxLength, ValidateNested} from 'class-validator';
 
@@ -107,5 +113,5 @@ export class InvestItemDto extends InvestItemDtoSimple {
  */
 export class CreateInvestItemDto extends IntersectionType(
   PickType(InvestItemDtoSimple, ['itemType', 'itemName'] as const),
-  PickType(InvestGroupDtoSimple, ['groupIdx'] as const)
+  PartialType(PickType(InvestGroupDtoSimple, ['groupIdx'] as const))
 ) {}

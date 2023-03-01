@@ -9,8 +9,9 @@ import {
   ManyToOne,
   PrimaryGeneratedColumn,
 } from 'typeorm';
-import {InvestGroupEntity, InvestUnitEntity, UserEntity} from '@db/entity';
+
 import {EInvestItemType, EYNState} from '@db/db.enum';
+import {InvestGroupEntity, InvestUnitEntity, UserEntity} from '@db/entity';
 import {DateTransformer} from '@db/transformer';
 
 @Entity('invest_item')
