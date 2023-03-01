@@ -2,17 +2,20 @@ import {Injectable} from '@nestjs/common';
 import {InjectRepository} from '@nestjs/typeorm';
 import {Repository, SelectQueryBuilder} from 'typeorm';
 
+import {TypeOrmHelper} from '@common/helper';
 import {IFindAllResult, IQueryListOption} from '@db/db.interface';
 import {InvestUnitEntity} from '@db/entity';
 import {BaseRepository} from '@db/repository';
 
 export interface IInvestUnitCondition {
+  unit_idx?: number | number[];
   item_idx?: number;
   user_idx?: number;
 }
 
 export interface IInvestUnitJoinOption {
   user?: boolean;
+  investItem?: boolean;
 }
 
 @Injectable()
@@ -29,6 +32,9 @@ export class InvestUnitRepository extends BaseRepository<InvestUnitEntity> {
     if (joinOption?.user) {
       builder.innerJoinAndSelect('unit.user', 'user');
     }
+    joinOption?.investItem
+      ? builder.leftJoinAndSelect('unit.investItem', 'item')
+      : builder.leftJoin('unit.investItem', 'item');
 
     return builder;
   }
@@ -37,8 +43,15 @@ export class InvestUnitRepository extends BaseRepository<InvestUnitEntity> {
     queryBuilder: SelectQueryBuilder<InvestUnitEntity>,
     condition: IInvestUnitCondition
   ) {
-    const {user_idx, item_idx} = condition;
+    const {unit_idx, user_idx, item_idx} = condition;
 
+    if (unit_idx) {
+      Array.isArray(unit_idx)
+        ? TypeOrmHelper.addInClause(queryBuilder, 'unit.unit_idx', unit_idx, {
+            paramName: 'unit_idx',
+          })
+        : queryBuilder.andWhere('unit.unit_idx = :unit_idx', {unit_idx});
+    }
     if (user_idx) {
       queryBuilder.andWhere('unit.user_idx = :user_idx', {user_idx: user_idx});
     }

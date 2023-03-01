@@ -4,7 +4,7 @@ import {DataSource, FindOptionsWhere} from 'typeorm';
 import {CreateInvestItemDto, UpdateInvestItemDto} from '@app/invest/dto';
 import {DataNotFoundException} from '@common/exception';
 import {IFindAllResult, IQueryListOption} from '@db/db.interface';
-import {InvestItemEntity, InvestUnitSetEntity} from '@db/entity';
+import {InvestItemEntity, InvestUnitEntity, InvestUnitSetEntity} from '@db/entity';
 import {
   IInvestItemCondition,
   IInvestItemJoinOption,
@@ -170,6 +170,53 @@ export class InvestItemService {
       //item 삭제
       const itemWhere: FindOptionsWhere<InvestItemEntity> = {item_idx: itemIdx};
       await entityManager.delete(InvestItemEntity, itemWhere);
+
+      await queryRunner.commitTransaction();
+    } catch (err) {
+      await queryRunner.rollbackTransaction();
+      throw err;
+    } finally {
+      await queryRunner.release();
+    }
+  }
+
+  /**
+   * 상품에 단위 추가
+   * @param itemIdx 상품 idx
+   * @param unitIdxs 추가할 단위 idx 목록
+   */
+  async addUnit(itemIdx: number, unitIdxs: number[]): Promise<void> {
+    //그룹 유무 체크
+    const hasItem = await this.investItemRepository.existsBy({item_idx: itemIdx});
+    if (!hasItem) throw new DataNotFoundException('invest item');
+
+    //트랜잭션 처리
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+    try {
+      const entityManager = queryRunner.manager;
+
+      for (const unitIdx of unitIdxs) {
+        //단위 유무 체크
+        const hasUnit = await entityManager.exists(InvestUnitEntity, {where: {unit_idx: unitIdx}});
+        if (!hasUnit) throw new DataNotFoundException('invest unit');
+
+        //상품에 존재하는 단위인지 확인
+        const hasUnitSet = await entityManager.exists(InvestUnitSetEntity, {
+          where: {
+            item_idx: itemIdx,
+            unit_idx: unitIdx,
+          },
+        });
+        if (hasUnitSet) continue;
+
+        //상품에 단위 추가
+        const entity = new InvestUnitSetEntity();
+        entity.item_idx = itemIdx;
+        entity.unit_idx = unitIdx;
+        await entityManager.save(entity, {reload: false});
+      }
 
       await queryRunner.commitTransaction();
     } catch (err) {

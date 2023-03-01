@@ -4,7 +4,7 @@ import {DataSource} from 'typeorm';
 import {CreateInvestGroupDto, UpdateInvestGroupDto} from '@app/invest/dto';
 import {DataNotFoundException} from '@common/exception';
 import {IFindAllResult, IQueryListOption} from '@db/db.interface';
-import {InvestGroupEntity, InvestGroupItemEntity} from '@db/entity';
+import {InvestGroupEntity, InvestGroupItemEntity, InvestItemEntity} from '@db/entity';
 import {IInvestGroupCondition, IInvestGroupJoinOption, InvestGroupRepository} from '@db/repository';
 
 @Injectable()
@@ -118,14 +118,18 @@ export class InvestGroupService {
       const entityManager = queryRunner.manager;
 
       for (const itemIdx of itemIdxs) {
+        //상품 유무 체크
+        const hasItem = await entityManager.exists(InvestItemEntity, {where: {item_idx: itemIdx}});
+        if (!hasItem) throw new DataNotFoundException('invest item');
+
         //그룹에 존재하는 상품인지 확인
-        const hasItem = await entityManager.exists(InvestGroupItemEntity, {
+        const hasGroupItem = await entityManager.exists(InvestGroupItemEntity, {
           where: {
             group_idx: groupIdx,
             item_idx: itemIdx,
           },
         });
-        if (hasItem) continue;
+        if (hasGroupItem) continue;
 
         //그룹에 상품 추가
         const entity = new InvestGroupItemEntity();

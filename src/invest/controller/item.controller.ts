@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Body,
   Controller,
   Delete,
@@ -8,6 +9,7 @@ import {
   Logger,
   LoggerService,
   Param,
+  ParseArrayPipe,
   ParseIntPipe,
   Patch,
   Post,
@@ -33,8 +35,13 @@ import {
   UpdateInvestItemDto,
 } from '@app/invest/dto';
 import {EInvestItemTypeLabel} from '@app/invest/invest.enum';
-import {InvestGroupService, InvestItemService} from '@app/invest/service';
-import {ApiConsumesCustom, ApiListResponse, ApiOkResponseCustom} from '@common/decorator/swagger';
+import {InvestItemService, InvestUnitService} from '@app/invest/service';
+import {
+  ApiBodyCustom,
+  ApiConsumesCustom,
+  ApiListResponse,
+  ApiOkResponseCustom,
+} from '@common/decorator/swagger';
 import {ListResponseDto, OkResponseDto} from '@common/dto';
 import {DataNotFoundException} from '@common/exception';
 import {RequiredPipe} from '@common/pipe';
@@ -47,7 +54,7 @@ export class ItemController {
   constructor(
     @Inject(Logger) private logger: LoggerService,
     private investItemService: InvestItemService,
-    private investGroupService: InvestGroupService
+    private investUnitService: InvestUnitService
   ) {}
 
   @ApiOperation({summary: '상품 타입 리스트 조회'})
@@ -163,7 +170,7 @@ export class ItemController {
     return new OkResponseDto(itemDto);
   }
 
-  @ApiOperation({summary: '상품 수정'})
+  @ApiOperation({summary: '상품 삭제'})
   @ApiParam({name: 'itemIdx', required: true, description: '상품 IDX', type: 'number'})
   @ApiOkResponseCustom({model: null})
   @Delete('/:itemIdx(\\d+)')
@@ -180,6 +187,46 @@ export class ItemController {
 
     //상품 delete
     await this.investItemService.deleteItem(itemIdx);
+
+    return new OkResponseDto();
+  }
+
+  @ApiOperation({summary: '상품에 단위 추가'})
+  @ApiParam({name: 'itemIdx', required: true, description: '상품 IDX', type: 'number'})
+  @ApiBodyCustom({
+    unitIdxs: {
+      description: '상품에 추가할 단위 IDX',
+      type: 'array',
+      items: {type: 'number'},
+      example: [1, 2, 3],
+    },
+  })
+  @ApiOkResponseCustom({model: null})
+  @Post('/:itemIdx(\\d+)/unit')
+  @HttpCode(200)
+  async addUnit(
+    @User() user: AuthUserDto,
+    @Param('itemIdx', new RequiredPipe(), new ParseIntPipe()) itemIdx: number,
+    @Body('unitIdxs', new RequiredPipe(), new ParseArrayPipe({items: Number})) unitIdxs: number[]
+  ): Promise<OkResponseDto<void>> {
+    //상품 유무 확인
+    const hasItem = await this.investItemService.hasItem({
+      item_idx: itemIdx,
+      user_idx: user.userIdx,
+    });
+    if (!hasItem) throw new DataNotFoundException('invest item');
+
+    //본인 단위인지 확인
+    const unitCount = await this.investUnitService.getUnitCount({
+      unit_idx: unitIdxs,
+      user_idx: user.userIdx,
+    });
+    if (unitIdxs.length != unitCount) {
+      throw new BadRequestException('There are invalid units to');
+    }
+
+    //상품에 단위 추가
+    await this.investItemService.addUnit(itemIdx, unitIdxs);
 
     return new OkResponseDto();
   }

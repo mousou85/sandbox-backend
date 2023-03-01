@@ -13,6 +13,22 @@ export class InvestUnitService {
   ) {}
 
   /**
+   * 단위 유무 체크
+   * @param condition
+   */
+  async hasUnit(condition: IInvestUnitCondition): Promise<boolean> {
+    return this.investUnitRepository.existsBy(condition);
+  }
+
+  /**
+   * 단위 갯수 반환
+   * @param condition
+   */
+  async getUnitCount(condition: IInvestUnitCondition): Promise<number> {
+    return this.investUnitRepository.countByCondition(condition);
+  }
+
+  /**
    * 단위 목록 반환
    * @param condition
    * @param listOption
