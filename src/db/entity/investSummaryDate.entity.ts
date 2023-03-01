@@ -7,9 +7,10 @@ import {
   ManyToOne,
   PrimaryGeneratedColumn,
 } from 'typeorm';
+
+import {EInvestSummaryDateType} from '@db/db.enum';
 import {InvestItemEntity, InvestUnitEntity} from '@db/entity';
 import {DateTransformer} from '@db/transformer';
-import {EInvestSummaryDateType} from '@db/db.enum';
 
 @Entity('invest_summary_date')
 @Index('IDX_CREATED_AT', ['created_at'])

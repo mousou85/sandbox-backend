@@ -1,11 +1,11 @@
 import {ValueTransformer} from 'typeorm';
+
 import {CommonHelper} from '@common/helper';
 
 /**
  * ip <-> long 변환 (typeORM 전용)
  */
 export class Ip2LongTransformer implements ValueTransformer {
-  constructor() {}
   /** DB to entity */
   from(dbValue: number | null): string | null {
     if (typeof dbValue == 'string') return dbValue;

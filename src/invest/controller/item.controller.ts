@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   HttpCode,
   Inject,
@@ -8,6 +9,7 @@ import {
   LoggerService,
   Param,
   ParseIntPipe,
+  Patch,
   Post,
   UseGuards,
 } from '@nestjs/common';
@@ -28,6 +30,7 @@ import {
   InvestItemDto,
   InvestItemDtoSimple,
   InvestUnitDto,
+  UpdateInvestItemDto,
 } from '@app/invest/dto';
 import {EInvestItemTypeLabel} from '@app/invest/invest.enum';
 import {InvestGroupService, InvestItemService} from '@app/invest/service';
@@ -124,15 +127,6 @@ export class ItemController {
     @User() user: AuthUserDto,
     @Body() createDto: CreateInvestItemDto
   ): Promise<OkResponseDto<InvestItemDtoSimple>> {
-    //그룹 idx 있으면 그룹 유무 체크
-    if (createDto.groupIdx) {
-      const hasGroup = await this.investGroupService.hasGroup({
-        group_idx: createDto.groupIdx,
-        user_idx: user.userIdx,
-      });
-      if (!hasGroup) throw new DataNotFoundException('invest group');
-    }
-
     //상품 insert
     const itemEntity = await this.investItemService.createItem(user.userIdx, createDto);
 
@@ -140,5 +134,53 @@ export class ItemController {
     const itemDto = new InvestItemDtoSimple(itemEntity);
 
     return new OkResponseDto(itemDto);
+  }
+
+  @ApiOperation({summary: '상품 수정'})
+  @ApiConsumesCustom()
+  @ApiParam({name: 'itemIdx', required: true, description: '상품 IDX', type: 'number'})
+  @ApiBody({type: UpdateInvestItemDto})
+  @ApiOkResponseCustom({model: InvestItemDtoSimple})
+  @Patch('/:itemIdx(\\d+)')
+  async updateItem(
+    @User() user: AuthUserDto,
+    @Param('itemIdx', new RequiredPipe(), new ParseIntPipe()) itemIdx: number,
+    @Body() updateDto: UpdateInvestItemDto
+  ): Promise<OkResponseDto<InvestItemDtoSimple>> {
+    //상품 유무 확인
+    const hasItem = await this.investItemService.hasItem({
+      item_idx: itemIdx,
+      user_idx: user.userIdx,
+    });
+    if (!hasItem) throw new DataNotFoundException('invest item');
+
+    //상품 update
+    const itemEntity = await this.investItemService.updateItem(itemIdx, updateDto);
+
+    //set vars: dto
+    const itemDto = new InvestItemDtoSimple(itemEntity);
+
+    return new OkResponseDto(itemDto);
+  }
+
+  @ApiOperation({summary: '상품 수정'})
+  @ApiParam({name: 'itemIdx', required: true, description: '상품 IDX', type: 'number'})
+  @ApiOkResponseCustom({model: null})
+  @Delete('/:itemIdx(\\d+)')
+  async deleteItem(
+    @User() user: AuthUserDto,
+    @Param('itemIdx', new RequiredPipe(), new ParseIntPipe()) itemIdx: number
+  ): Promise<OkResponseDto<void>> {
+    //상품 유무 확인
+    const hasItem = await this.investItemService.hasItem({
+      item_idx: itemIdx,
+      user_idx: user.userIdx,
+    });
+    if (!hasItem) throw new DataNotFoundException('invest item');
+
+    //상품 delete
+    await this.investItemService.deleteItem(itemIdx);
+
+    return new OkResponseDto();
   }
 }

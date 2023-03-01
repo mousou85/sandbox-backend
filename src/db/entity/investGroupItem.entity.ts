@@ -1,4 +1,5 @@
 import {BaseEntity, Entity, Index, JoinColumn, ManyToOne, PrimaryColumn} from 'typeorm';
+
 import {InvestGroupEntity, InvestItemEntity} from '@db/entity';
 
 @Entity('invest_group_item')

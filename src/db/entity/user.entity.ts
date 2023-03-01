@@ -1,7 +1,8 @@
 import {BaseEntity, Column, Entity, Index, OneToOne, PrimaryGeneratedColumn, Unique} from 'typeorm';
+
 import {EYNState} from '@db/db.enum';
-import {DateTransformer} from '@db/transformer';
 import {UserOtpEntity, UserPasswordSaltEntity} from '@db/entity';
+import {DateTransformer} from '@db/transformer';
 
 @Entity('users')
 @Unique('UNIQ_UID', ['uid'])

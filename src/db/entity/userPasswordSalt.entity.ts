@@ -1,4 +1,5 @@
 import {BaseEntity, Column, Entity, JoinColumn, OneToOne, PrimaryColumn} from 'typeorm';
+
 import {UserEntity} from '@db/entity/user.entity';
 
 @Entity('users_password_salt')

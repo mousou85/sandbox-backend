@@ -7,8 +7,9 @@ import {
   ManyToOne,
   PrimaryGeneratedColumn,
 } from 'typeorm';
-import {DateTransformer, Ip2LongTransformer} from '@db/transformer';
+
 import {UserEntity} from '@db/entity/user.entity';
+import {DateTransformer, Ip2LongTransformer} from '@db/transformer';
 
 /**
  * user login log types

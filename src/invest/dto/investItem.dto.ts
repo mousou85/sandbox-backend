@@ -1,14 +1,8 @@
-import {
-  ApiExtraModels,
-  ApiProperty,
-  IntersectionType,
-  PartialType,
-  PickType,
-} from '@nestjs/swagger';
+import {ApiExtraModels, ApiProperty, PartialType, PickType} from '@nestjs/swagger';
 import {Expose, Transform} from 'class-transformer';
 import {IsNotEmpty, IsOptional, MaxLength, ValidateNested} from 'class-validator';
 
-import {InvestGroupDtoSimple, InvestUnitDto} from '@app/invest/dto';
+import {InvestUnitDto} from '@app/invest/dto';
 import {EInvestItemTypeLabel} from '@app/invest/invest.enum';
 import {IsDateString, IsEnum, IsInt} from '@common/decorator/validate';
 import {DefaultDto} from '@common/dto';
@@ -111,7 +105,14 @@ export class InvestItemDto extends InvestItemDtoSimple {
 /**
  * 상품 생성 DTO
  */
-export class CreateInvestItemDto extends IntersectionType(
-  PickType(InvestItemDtoSimple, ['itemType', 'itemName'] as const),
-  PartialType(PickType(InvestGroupDtoSimple, ['groupIdx'] as const))
+export class CreateInvestItemDto extends PickType(InvestItemDtoSimple, [
+  'itemType',
+  'itemName',
+] as const) {}
+
+/**
+ * 상품 수정 DTO
+ */
+export class UpdateInvestItemDto extends PartialType(
+  PickType(InvestItemDtoSimple, ['itemType', 'itemName'] as const)
 ) {}

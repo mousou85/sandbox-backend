@@ -1,10 +1,11 @@
 import {Injectable} from '@nestjs/common';
-import {EntityManager, Repository, SelectQueryBuilder} from 'typeorm';
-import {UserEntity, UserOtpEntity, UserPasswordSaltEntity} from '@db/entity';
 import {InjectRepository} from '@nestjs/typeorm';
-import {BaseRepository} from '@db/repository/base.repository';
+import {EntityManager, Repository, SelectQueryBuilder} from 'typeorm';
+
 import {EYNState} from '@db/db.enum';
 import {IFindAllResult, IQueryListOption} from '@db/db.interface';
+import {UserEntity, UserOtpEntity, UserPasswordSaltEntity} from '@db/entity';
+import {BaseRepository} from '@db/repository';
 
 export interface IUserCondition {
   user_idx?: number;

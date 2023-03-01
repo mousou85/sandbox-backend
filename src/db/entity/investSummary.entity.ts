@@ -7,6 +7,7 @@ import {
   ManyToOne,
   PrimaryGeneratedColumn,
 } from 'typeorm';
+
 import {InvestItemEntity, InvestUnitEntity} from '@db/entity';
 import {DateTransformer} from '@db/transformer';
 

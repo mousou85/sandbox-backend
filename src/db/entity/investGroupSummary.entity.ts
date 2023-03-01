@@ -1,4 +1,5 @@
 import {BaseEntity, Column, Entity, Index, JoinColumn, ManyToOne, PrimaryColumn} from 'typeorm';
+
 import {InvestGroupEntity} from '@db/entity';
 import {DateTransformer} from '@db/transformer';
 

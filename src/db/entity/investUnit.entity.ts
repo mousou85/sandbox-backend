@@ -9,8 +9,9 @@ import {
   ManyToOne,
   PrimaryGeneratedColumn,
 } from 'typeorm';
-import {InvestItemEntity, UserEntity} from '@db/entity';
+
 import {EInvestUnitType} from '@db/db.enum';
+import {InvestItemEntity, UserEntity} from '@db/entity';
 
 @Entity('invest_unit')
 @Index('IDX_USER', ['user_idx'])

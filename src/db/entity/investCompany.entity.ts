@@ -7,8 +7,9 @@ import {
   ManyToOne,
   PrimaryGeneratedColumn,
 } from 'typeorm';
-import {DateTransformer} from '@db/transformer';
+
 import {UserEntity} from '@db/entity';
+import {DateTransformer} from '@db/transformer';
 
 @Entity('invest_company')
 @Index('IDX_USER', ['user_idx'])

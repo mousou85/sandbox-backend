@@ -5,7 +5,7 @@ import {Repository, SelectQueryBuilder} from 'typeorm';
 import {TypeOrmHelper} from '@common/helper';
 import {IFindAllResult, IQueryListOption} from '@db/db.interface';
 import {InvestGroupEntity} from '@db/entity';
-import {BaseRepository} from '@db/repository/base.repository';
+import {BaseRepository} from '@db/repository';
 
 export interface IInvestGroupCondition {
   group_idx?: number;

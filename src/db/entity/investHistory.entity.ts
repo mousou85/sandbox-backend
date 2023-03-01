@@ -7,8 +7,9 @@ import {
   ManyToOne,
   PrimaryGeneratedColumn,
 } from 'typeorm';
-import {InvestItemEntity, InvestUnitEntity} from '@db/entity';
+
 import {EInvestHistoryInOutType, EInvestHistoryRevenueType, EInvestHistoryType} from '@db/db.enum';
+import {InvestItemEntity, InvestUnitEntity} from '@db/entity';
 import {DateTransformer} from '@db/transformer';
 
 @Entity('invest_history')
