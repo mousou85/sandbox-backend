@@ -85,17 +85,15 @@ export class ItemController {
     const resDto = new ListResponseDto(InvestItemDto).setTotalCount(itemTotalCount);
 
     //응답 데이터 리스트에 데이터 세팅
-    resDto.data.list = await Promise.all(
-      itemList.map(async (item) => {
-        //set vars: 상품 dto
-        const itemDto = new InvestItemDto(item);
+    resDto.data.list = itemList.map((item) => {
+      //set vars: 상품 dto
+      const itemDto = new InvestItemDto(item);
 
-        //상품 dto에 사용 가능 단위 목록 세팅
-        itemDto.unitList = item.investUnit.map((unit) => new InvestUnitDto(unit));
+      //상품 dto에 사용 가능 단위 목록 세팅
+      itemDto.unitList = item.investUnit.map((unit) => new InvestUnitDto(unit));
 
-        return itemDto;
-      })
-    );
+      return itemDto;
+    });
 
     return resDto;
   }
@@ -189,6 +187,24 @@ export class ItemController {
     await this.investItemService.deleteItem(itemIdx);
 
     return new OkResponseDto();
+  }
+
+  @ApiOperation({summary: '상품에 등록된 단위 리스트 조회'})
+  @ApiParam({name: 'itemIdx', required: true, description: '상품 IDX', type: 'number'})
+  @ApiListResponse({model: InvestUnitDto})
+  @Get('/:itemIdx(\\d+)/unit')
+  async getUnitList(
+    @User() user: AuthUserDto,
+    @Param('itemIdx', new RequiredPipe(), new ParseIntPipe()) itemIdx: number
+  ): Promise<ListResponseDto<InvestUnitDto>> {
+    const investUnitList = await this.investItemService.getUnitList(itemIdx);
+
+    const resDto = new ListResponseDto<InvestUnitDto>(InvestUnitDto);
+    resDto.data.list = investUnitList.map((unit) => {
+      return new InvestUnitDto(unit);
+    });
+
+    return resDto;
   }
 
   @ApiOperation({summary: '상품에 단위 추가'})

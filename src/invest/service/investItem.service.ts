@@ -10,6 +10,7 @@ import {
   IInvestItemJoinOption,
   InvestHistoryRepository,
   InvestItemRepository,
+  InvestUnitRepository,
 } from '@db/repository';
 
 @Injectable()
@@ -17,6 +18,7 @@ export class InvestItemService {
   constructor(
     protected dataSource: DataSource,
     protected investItemRepository: InvestItemRepository,
+    protected investUnitRepository: InvestUnitRepository,
     protected investHistoryRepository: InvestHistoryRepository
   ) {}
 
@@ -145,6 +147,19 @@ export class InvestItemService {
     } finally {
       await queryRunner.release();
     }
+  }
+
+  /**
+   * 상품에 등록된 단위 목록 반환
+   * @param itemIdx
+   */
+  async getUnitList(itemIdx: number): Promise<InvestUnitEntity[]> {
+    const {list} = await this.investUnitRepository.findAllByCondition(
+      {item_idx: itemIdx},
+      {getAll: true, sort: {column: 'unit.unit_idx', direction: 'ASC'}}
+    );
+
+    return list;
   }
 
   /**
