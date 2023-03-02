@@ -8,7 +8,6 @@ import {InvestItemEntity, InvestUnitEntity, InvestUnitSetEntity} from '@db/entit
 import {
   IInvestItemCondition,
   IInvestItemJoinOption,
-  InvestGroupRepository,
   InvestHistoryRepository,
   InvestItemRepository,
 } from '@db/repository';
@@ -18,7 +17,6 @@ export class InvestItemService {
   constructor(
     protected dataSource: DataSource,
     protected investItemRepository: InvestItemRepository,
-    protected investGroupRepository: InvestGroupRepository,
     protected investHistoryRepository: InvestHistoryRepository
   ) {}
 
@@ -82,29 +80,14 @@ export class InvestItemService {
    * @param createDto
    */
   async createItem(userIdx: number, createDto: CreateInvestItemDto): Promise<InvestItemEntity> {
-    //트랜잭션 처리
-    const queryRunner = this.dataSource.createQueryRunner();
-    await queryRunner.connect();
-    await queryRunner.startTransaction();
-    try {
-      const entityManager = queryRunner.manager;
+    //상품 insert
+    const itemEntity = this.investItemRepository.create();
+    itemEntity.user_idx = userIdx;
+    itemEntity.item_type = createDto.itemType;
+    itemEntity.item_name = createDto.itemName;
+    await this.investItemRepository.save(itemEntity);
 
-      //상품 insert
-      const itemEntity = this.investItemRepository.create();
-      itemEntity.user_idx = userIdx;
-      itemEntity.item_type = createDto.itemType;
-      itemEntity.item_name = createDto.itemName;
-      await entityManager.save(itemEntity);
-
-      await queryRunner.commitTransaction();
-
-      return itemEntity;
-    } catch (err) {
-      await queryRunner.rollbackTransaction();
-      throw err;
-    } finally {
-      await queryRunner.release();
-    }
+    return itemEntity;
   }
 
   /**
@@ -116,31 +99,15 @@ export class InvestItemService {
     const itemEntity = await this.investItemRepository.findOneBy({item_idx: itemIdx});
     if (!itemEntity) throw new DataNotFoundException('invest item');
 
-    //트랜잭션 처리
-    const queryRunner = this.dataSource.createQueryRunner();
-    await queryRunner.connect();
-    await queryRunner.startTransaction();
-    try {
-      const entityManager = queryRunner.manager;
+    //set vars: update dto props
+    const {itemType, itemName} = updateDto;
 
-      //set vars: update dto props
-      const {itemType, itemName} = updateDto;
+    //상품 update
+    if (itemType) itemEntity.item_type = itemType;
+    if (itemName) itemEntity.item_name = itemName;
+    await this.investItemRepository.save(itemEntity);
 
-      //상품 update
-      if (itemType) itemEntity.item_type = itemType;
-      if (itemName) itemEntity.item_name = itemName;
-
-      await entityManager.save(itemEntity);
-
-      await queryRunner.commitTransaction();
-
-      return itemEntity;
-    } catch (err) {
-      await queryRunner.rollbackTransaction();
-      throw err;
-    } finally {
-      await queryRunner.release();
-    }
+    return itemEntity;
   }
 
   /**
@@ -154,7 +121,7 @@ export class InvestItemService {
 
     //히스토리 유무 체크
     const hasHistory = await this.investHistoryRepository.existsBy({item_idx: itemIdx});
-    if (hasHistory) throw new BadRequestException('Items with history cannot be deleted');
+    if (hasHistory) throw new BadRequestException('Item with history cannot be deleted');
 
     //트랜잭션 처리
     const queryRunner = this.dataSource.createQueryRunner();
@@ -186,7 +153,7 @@ export class InvestItemService {
    * @param unitIdxs 추가할 단위 idx 목록
    */
   async addUnit(itemIdx: number, unitIdxs: number[]): Promise<void> {
-    //그룹 유무 체크
+    //상품 유무 체크
     const hasItem = await this.investItemRepository.existsBy({item_idx: itemIdx});
     if (!hasItem) throw new DataNotFoundException('invest item');
 
@@ -216,6 +183,44 @@ export class InvestItemService {
         entity.item_idx = itemIdx;
         entity.unit_idx = unitIdx;
         await entityManager.save(entity, {reload: false});
+      }
+
+      await queryRunner.commitTransaction();
+    } catch (err) {
+      await queryRunner.rollbackTransaction();
+      throw err;
+    } finally {
+      await queryRunner.release();
+    }
+  }
+
+  /**
+   * 상품에 단위 제거
+   * @param itemIdx 상품 idx
+   * @param unitIdxs 제거할 단위 idx 목록
+   */
+  async removeUnit(itemIdx: number, unitIdxs: number[]): Promise<void> {
+    //상품 유무 체크
+    const hasItem = await this.investItemRepository.existsBy({item_idx: itemIdx});
+    if (!hasItem) throw new DataNotFoundException('invest item');
+
+    //트랜잭션 처리
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+    try {
+      const entityManager = queryRunner.manager;
+
+      for (const unitIdx of unitIdxs) {
+        //set vars: 데이터
+        const entity = await entityManager.findOneBy(InvestUnitSetEntity, {
+          item_idx: itemIdx,
+          unit_idx: unitIdx,
+        });
+        if (!entity) continue;
+
+        //상품에 단위 제거
+        await entityManager.remove(entity);
       }
 
       await queryRunner.commitTransaction();

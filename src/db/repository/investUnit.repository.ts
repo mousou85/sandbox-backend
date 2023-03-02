@@ -11,6 +11,7 @@ export interface IInvestUnitCondition {
   unit_idx?: number | number[];
   item_idx?: number;
   user_idx?: number;
+  unit?: string;
 }
 
 export interface IInvestUnitJoinOption {
@@ -43,7 +44,7 @@ export class InvestUnitRepository extends BaseRepository<InvestUnitEntity> {
     queryBuilder: SelectQueryBuilder<InvestUnitEntity>,
     condition: IInvestUnitCondition
   ) {
-    const {unit_idx, user_idx, item_idx} = condition;
+    const {unit_idx, user_idx, item_idx, unit} = condition;
 
     if (unit_idx) {
       Array.isArray(unit_idx)
@@ -57,6 +58,9 @@ export class InvestUnitRepository extends BaseRepository<InvestUnitEntity> {
     }
     if (item_idx) {
       queryBuilder.andWhere('item.item_idx = :item_idx', {item_idx: item_idx});
+    }
+    if (unit) {
+      queryBuilder.andWhere('unit.unit = :unit', {unit: unit});
     }
 
     return queryBuilder;

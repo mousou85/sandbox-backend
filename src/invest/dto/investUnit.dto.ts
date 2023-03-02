@@ -1,4 +1,4 @@
-import {ApiProperty} from '@nestjs/swagger';
+import {ApiProperty, PartialType, PickType} from '@nestjs/swagger';
 import {Expose, Transform} from 'class-transformer';
 import {IsNotEmpty} from 'class-validator';
 
@@ -40,3 +40,15 @@ export class InvestUnitDto extends DefaultDto {
     }
   }
 }
+
+/**
+ * 단위 생성 DTO
+ */
+export class CreateInvestUnitDto extends PickType(InvestUnitDto, ['unit', 'unitType'] as const) {}
+
+/**
+ * 단위 수정 DTO
+ */
+export class UpdateInvestUnitDto extends PartialType(
+  PickType(InvestUnitDto, ['unit', 'unitType'] as const)
+) {}

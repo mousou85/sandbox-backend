@@ -230,4 +230,43 @@ export class ItemController {
 
     return new OkResponseDto();
   }
+
+  @ApiOperation({summary: '상품에 단위 제거'})
+  @ApiParam({name: 'itemIdx', required: true, description: '상품 IDX', type: 'number'})
+  @ApiBodyCustom({
+    unitIdxs: {
+      description: '상품에서 제거할 단위 IDX',
+      type: 'array',
+      items: {type: 'number'},
+      example: [1, 2, 3],
+    },
+  })
+  @ApiOkResponseCustom({model: null})
+  @Delete('/:itemIdx(\\d+)/unit')
+  async removeUnit(
+    @User() user: AuthUserDto,
+    @Param('itemIdx', new RequiredPipe(), new ParseIntPipe()) itemIdx: number,
+    @Body('unitIdxs', new RequiredPipe(), new ParseArrayPipe({items: Number})) unitIdxs: number[]
+  ): Promise<OkResponseDto<void>> {
+    //상품 유무 확인
+    const hasItem = await this.investItemService.hasItem({
+      item_idx: itemIdx,
+      user_idx: user.userIdx,
+    });
+    if (!hasItem) throw new DataNotFoundException('invest item');
+
+    //본인 단위인지 확인
+    const unitCount = await this.investUnitService.getUnitCount({
+      unit_idx: unitIdxs,
+      user_idx: user.userIdx,
+    });
+    if (unitIdxs.length != unitCount) {
+      throw new BadRequestException('There are invalid units to');
+    }
+
+    //상품에 단위 제거
+    await this.investItemService.removeUnit(itemIdx, unitIdxs);
+
+    return new OkResponseDto();
+  }
 }
