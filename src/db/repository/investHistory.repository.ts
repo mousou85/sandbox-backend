@@ -2,6 +2,13 @@ import {Injectable} from '@nestjs/common';
 import {InjectRepository} from '@nestjs/typeorm';
 import {Repository, SelectQueryBuilder} from 'typeorm';
 
+import {TypeOrmHelper} from '@common/helper';
+import {
+  EComparisonOp,
+  EInvestHistoryInOutType,
+  EInvestHistoryRevenueType,
+  EInvestHistoryType,
+} from '@db/db.enum';
 import {IFindAllResult, IQueryListOption} from '@db/db.interface';
 import {InvestHistoryEntity} from '@db/entity';
 import {BaseRepository} from '@db/repository';
@@ -11,6 +18,11 @@ export interface IInvestHistoryCondition {
   item_idx?: number;
   unit_idx?: number;
   user_idx?: number;
+  history_date?: {begin: string; end: string} | {value: string; op: EComparisonOp};
+  history_type?: EInvestHistoryType;
+  inout_type?: EInvestHistoryInOutType;
+  revenue_type?: EInvestHistoryRevenueType;
+  unit?: string;
 }
 
 export interface IInvestHistoryJoinOption {
@@ -36,9 +48,9 @@ export class InvestHistoryRepository extends BaseRepository<InvestHistoryEntity>
       builder.innerJoin('history.investItem', 'item');
       builder.innerJoin('item.user', 'user');
     }
-    if (joinOption?.investUnit) {
-      builder.innerJoinAndSelect('history.investUnit', 'unit');
-    }
+    joinOption?.investUnit
+      ? builder.innerJoinAndSelect('history.investUnit', 'unit')
+      : builder.innerJoin('history.investUnit', 'unit');
 
     return builder;
   }
@@ -47,7 +59,17 @@ export class InvestHistoryRepository extends BaseRepository<InvestHistoryEntity>
     queryBuilder: SelectQueryBuilder<InvestHistoryEntity>,
     condition: IInvestHistoryCondition
   ) {
-    const {history_idx, item_idx, unit_idx, user_idx} = condition;
+    const {
+      history_idx,
+      item_idx,
+      unit_idx,
+      user_idx,
+      history_date,
+      history_type,
+      inout_type,
+      revenue_type,
+      unit,
+    } = condition;
 
     if (history_idx) {
       queryBuilder.andWhere('history.history_idx = :history_idx', {history_idx});
@@ -60,6 +82,33 @@ export class InvestHistoryRepository extends BaseRepository<InvestHistoryEntity>
     }
     if (user_idx) {
       queryBuilder.andWhere('user.user_idx = :user_idx', {user_idx});
+    }
+    if (history_date) {
+      if ('op' in history_date) {
+        queryBuilder.andWhere(`history.history_date ${history_date.op} :history_date`, {
+          history_date: history_date.value,
+        });
+      } else {
+        TypeOrmHelper.addBetweenClause(
+          queryBuilder,
+          'history.history_date',
+          history_date.begin,
+          history_date.end,
+          {paramName: 'historyDate', operator: 'and'}
+        );
+      }
+    }
+    if (inout_type) {
+      queryBuilder.andWhere('history.inout_type = :inout_type', {inout_type});
+    }
+    if (revenue_type) {
+      queryBuilder.andWhere('history.revenue_type = :revenue_type', {revenue_type});
+    }
+    if (history_type) {
+      queryBuilder.andWhere('history.history_type = :history_type', {history_type});
+    }
+    if (unit) {
+      queryBuilder.andWhere('unit.unit = :unit', {unit});
     }
 
     return queryBuilder;

@@ -6,6 +6,7 @@ import {
   LoggerService,
   Param,
   ParseIntPipe,
+  Query,
   UseGuards,
 } from '@nestjs/common';
 import {ApiBearerAuth, ApiOperation, ApiParam, ApiTags} from '@nestjs/swagger';
@@ -13,12 +14,14 @@ import {ApiBearerAuth, ApiOperation, ApiParam, ApiTags} from '@nestjs/swagger';
 import {User} from '@app/auth/auth.decorator';
 import {JwtAuthGuard} from '@app/auth/authGuard';
 import {AuthUserDto} from '@app/auth/dto';
-import {InvestHistoryDto} from '@app/invest/dto';
-import {InvestHistoryService} from '@app/invest/service';
-import {ApiOkResponseCustom} from '@common/decorator/swagger';
-import {OkResponseDto} from '@common/dto';
+import {InvestHistoryDto, UrlQueryInvestHistoryListDto} from '@app/invest/dto';
+import {InvestHistoryService, InvestItemService} from '@app/invest/service';
+import {ApiListResponse, ApiOkResponseCustom} from '@common/decorator/swagger';
+import {ListResponseDto, OkResponseDto} from '@common/dto';
 import {DataNotFoundException} from '@common/exception';
+import {DateHelper} from '@common/helper';
 import {RequiredPipe} from '@common/pipe';
+import {IInvestHistoryCondition} from '@db/repository';
 
 @ApiTags('투자 히스토리')
 @ApiBearerAuth()
@@ -27,8 +30,57 @@ import {RequiredPipe} from '@common/pipe';
 export class HistoryController {
   constructor(
     @Inject(Logger) private logger: LoggerService,
-    private investHistoryService: InvestHistoryService
+    private investHistoryService: InvestHistoryService,
+    private investItemService: InvestItemService
   ) {}
+
+  @ApiOperation({summary: '히스토리 리스트 조회'})
+  @ApiParam({name: 'itemIdx', required: true, description: '상품 IDX', type: 'number'})
+  @ApiListResponse({model: InvestHistoryDto})
+  @Get('/:itemIdx(\\d+)/list')
+  async getHistoryList(
+    @User() user: AuthUserDto,
+    @Param('itemIdx', new RequiredPipe(), new ParseIntPipe()) itemIdx: number,
+    @Query() urlQuery: UrlQueryInvestHistoryListDto
+  ): Promise<ListResponseDto<InvestHistoryDto>> {
+    //상품 유무 확인
+    const hasItem = await this.investItemService.hasItem({
+      item_idx: itemIdx,
+      user_idx: user.userIdx,
+    });
+    if (!hasItem) throw new DataNotFoundException('invest item');
+
+    //set vars: 검색 조건
+    const queryCondition: IInvestHistoryCondition = {
+      item_idx: itemIdx,
+    };
+    if (urlQuery.historyType) queryCondition.history_type = urlQuery.historyType;
+    if (urlQuery.unit) queryCondition.unit = urlQuery.unit;
+    if (urlQuery.historyMonth) {
+      queryCondition.history_date = {
+        begin: `${urlQuery.historyMonth}-01`,
+        end: DateHelper.endOfDay(`${urlQuery.historyMonth}-01`),
+      };
+    }
+
+    //set vars: 히스토리 리스트
+    const {list: historyList, totalCount: historyTotalCount} =
+      await this.investHistoryService.getHistoryList(
+        queryCondition,
+        {getAll: true},
+        {investUnit: true}
+      );
+
+    //set vars: 히스토리 리스트 dto
+    const resListDto = new ListResponseDto<InvestHistoryDto>(InvestHistoryDto).setTotalCount(
+      historyTotalCount
+    );
+    resListDto.data.list = historyList.map((history) => {
+      return new InvestHistoryDto(history);
+    });
+
+    return resListDto;
+  }
 
   @ApiOperation({summary: '히스토리 조회'})
   @ApiParam({name: 'historyIdx', required: true, description: '히스토리 IDX', type: 'number'})

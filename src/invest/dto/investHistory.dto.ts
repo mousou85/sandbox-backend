@@ -1,13 +1,21 @@
-import {ApiProperty, IntersectionType, PickType} from '@nestjs/swagger';
+import {ApiProperty} from '@nestjs/swagger';
 import {Expose, Transform} from 'class-transformer';
 import {IsNotEmpty, IsNumber, IsOptional} from 'class-validator';
 
-import {InvestUnitDto} from '@app/invest/dto/investUnit.dto';
-import {IsDateString, IsEnum, IsInt} from '@common/decorator/validate';
+import {
+  EInvestHistoryInOutTypeLabel,
+  EInvestHistoryRevenueTypeLabel,
+  EInvestHistoryTypeLabel,
+} from '@app/invest/invest.enum';
+import {IsDateOnlyString, IsDateString, IsEnum, IsInt} from '@common/decorator/validate';
 import {DefaultDto} from '@common/dto';
 import {DtoTransform} from '@common/dto.transform';
-import {DtoHelper} from '@common/helper';
-import {EInvestHistoryInOutType, EInvestHistoryRevenueType, EInvestHistoryType} from '@db/db.enum';
+import {
+  EInvestHistoryInOutType,
+  EInvestHistoryRevenueType,
+  EInvestHistoryType,
+  EInvestUnitType,
+} from '@db/db.enum';
 import {InvestHistoryEntity} from '@db/entity';
 
 /**
@@ -54,6 +62,13 @@ export class InvestHistoryDtoSimple extends DefaultDto {
   @Transform(({value}) => DtoTransform.trim(value))
   historyType: EInvestHistoryType;
 
+  @ApiProperty({description: '히스토리 타입 라벨', required: true, enum: EInvestHistoryTypeLabel})
+  @Expose()
+  @IsEnum(EInvestHistoryTypeLabel, {allowEmptyString: false})
+  get historyTypeLabel(): EInvestHistoryTypeLabel {
+    return this.historyType ? EInvestHistoryTypeLabel[this.historyType] : undefined;
+  }
+
   @ApiProperty({
     description: '유입/유출 타입',
     required: false,
@@ -67,6 +82,17 @@ export class InvestHistoryDtoSimple extends DefaultDto {
   inoutType?: EInvestHistoryInOutType;
 
   @ApiProperty({
+    description: '유입/유출 타입 라벨',
+    required: false,
+    enum: EInvestHistoryInOutTypeLabel,
+  })
+  @Expose()
+  @IsEnum(EInvestHistoryInOutTypeLabel, {allowEmptyString: false})
+  get inoutTypeLabel(): EInvestHistoryInOutTypeLabel {
+    return this.inoutType ? EInvestHistoryInOutTypeLabel[this.inoutType] : undefined;
+  }
+
+  @ApiProperty({
     description: '평가/수익 타입',
     required: false,
     type: 'string',
@@ -77,6 +103,17 @@ export class InvestHistoryDtoSimple extends DefaultDto {
   @IsOptional()
   @Transform(({value}) => DtoTransform.trim(value))
   revenueType?: EInvestHistoryRevenueType;
+
+  @ApiProperty({
+    description: '평가/수익 타입 라벨',
+    required: false,
+    enum: EInvestHistoryRevenueTypeLabel,
+  })
+  @Expose()
+  @IsEnum(EInvestHistoryRevenueTypeLabel, {allowEmptyString: false})
+  get revenueTypeLabel(): EInvestHistoryRevenueTypeLabel {
+    return this.revenueType ? EInvestHistoryRevenueTypeLabel[this.revenueType] : undefined;
+  }
 
   @ApiProperty({description: '값', required: true, type: 'number'})
   @Expose()
@@ -117,24 +154,56 @@ export class InvestHistoryDtoSimple extends DefaultDto {
 /**
  * 히스토리 DTO
  */
-export class InvestHistoryDto extends IntersectionType(
-  InvestHistoryDtoSimple,
-  PickType(InvestUnitDto, ['unit', 'unitType'] as const)
-) {
+export class InvestHistoryDto extends InvestHistoryDtoSimple {
+  @ApiProperty({description: '단위', required: true})
+  @Expose()
+  @IsNotEmpty()
+  @Transform(({value}) => DtoTransform.trim(value))
+  unit: string;
+
+  @ApiProperty({description: '단위 타입', required: true, enum: EInvestUnitType})
+  @Expose()
+  @IsEnum(EInvestUnitType, {allowEmptyString: false})
+  @IsNotEmpty()
+  unitType: EInvestUnitType;
+
   constructor(data?: InvestHistoryEntity) {
-    super();
-    if (data) {
-      DtoHelper.transformForExistsDto(data, this, {
-        keyToCamelCase: true,
-        excludeExtraneousValues: true,
-      });
+    super(data);
+    if (data && data.investUnit) {
+      const unitEntity = data.investUnit;
 
-      if (data.investUnit) {
-        const unitEntity = data.investUnit;
-
-        this.unit = unitEntity.unit;
-        this.unitType = unitEntity.unit_type;
-      }
+      this.unit = unitEntity.unit;
+      this.unitType = unitEntity.unit_type;
     }
   }
+}
+
+/**
+ * 히스토리 리스트 조회 url query DTO
+ */
+export class UrlQueryInvestHistoryListDto extends DefaultDto {
+  @ApiProperty({
+    description: '히스토리 타입',
+    required: false,
+    type: 'string',
+    enum: EInvestHistoryType,
+  })
+  @Expose()
+  @IsEnum(EInvestHistoryType, {allowEmptyString: true})
+  @IsOptional()
+  @Transform(({value}) => DtoTransform.trim(value))
+  historyType?: EInvestHistoryType;
+
+  @ApiProperty({description: '단위', required: false, type: 'string'})
+  @Expose()
+  @IsOptional()
+  @Transform(({value}) => DtoTransform.trim(value))
+  unit?: string;
+
+  @ApiProperty({description: '기록일자(년-월)', required: false, type: 'string'})
+  @Expose()
+  @IsDateOnlyString({allowEmptyString: true, format: 'yearmonth'})
+  @IsOptional()
+  @Transform(({value}) => DtoTransform.trim(value))
+  historyMonth?: string;
 }

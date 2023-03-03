@@ -48,4 +48,30 @@ export class TypeOrmHelper {
 
     operator == 'and' ? queryBuilder.andWhere(query, param) : queryBuilder.orWhere(query, param);
   }
+
+  /**
+   * between 조건 추가
+   * @param queryBuilder
+   * @param column
+   * @param beginDate
+   * @param endDate
+   * @param opts
+   */
+  static addBetweenClause<Entity extends BaseEntity>(
+    queryBuilder: SelectQueryBuilder<Entity>,
+    column: string,
+    beginDate: string,
+    endDate: string,
+    opts: {paramName?: string; operator?: 'and' | 'or'} = {operator: 'and'}
+  ) {
+    const operator = opts?.operator ?? 'and';
+    const paramName = opts?.paramName ?? column.replace(/\./g, '_');
+
+    const query = `${column} BETWEEN :${paramName}BeginDate AND :${paramName}EndDate`;
+    let param = {};
+    param[`${paramName}BeginDate`] = beginDate;
+    param[`${paramName}EndDate`] = endDate;
+
+    operator == 'and' ? queryBuilder.andWhere(query, param) : queryBuilder.orWhere(query, param);
+  }
 }
