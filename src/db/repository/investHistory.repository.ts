@@ -10,6 +10,7 @@ export interface IInvestHistoryCondition {
   history_idx?: number;
   item_idx?: number;
   unit_idx?: number;
+  user_idx?: number;
 }
 
 export interface IInvestHistoryJoinOption {
@@ -30,6 +31,10 @@ export class InvestHistoryRepository extends BaseRepository<InvestHistoryEntity>
     const builder = this.repository.createQueryBuilder('history');
     if (joinOption?.investItem) {
       builder.innerJoinAndSelect('history.investItem', 'item');
+      builder.innerJoin('item.user', 'user');
+    } else {
+      builder.innerJoin('history.investItem', 'item');
+      builder.innerJoin('item.user', 'user');
     }
     if (joinOption?.investUnit) {
       builder.innerJoinAndSelect('history.investUnit', 'unit');
@@ -42,7 +47,7 @@ export class InvestHistoryRepository extends BaseRepository<InvestHistoryEntity>
     queryBuilder: SelectQueryBuilder<InvestHistoryEntity>,
     condition: IInvestHistoryCondition
   ) {
-    const {history_idx, item_idx, unit_idx} = condition;
+    const {history_idx, item_idx, unit_idx, user_idx} = condition;
 
     if (history_idx) {
       queryBuilder.andWhere('history.history_idx = :history_idx', {history_idx});
@@ -52,6 +57,9 @@ export class InvestHistoryRepository extends BaseRepository<InvestHistoryEntity>
     }
     if (unit_idx) {
       queryBuilder.andWhere('history.unit_idx = :unit_idx', {unit_idx});
+    }
+    if (user_idx) {
+      queryBuilder.andWhere('user.user_idx = :user_idx', {user_idx});
     }
 
     return queryBuilder;
