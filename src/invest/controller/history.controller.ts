@@ -1,11 +1,14 @@
 import {
+  Body,
   Controller,
   Get,
+  HttpCode,
   Inject,
   Logger,
   LoggerService,
   Param,
   ParseIntPipe,
+  Post,
   Query,
   UseGuards,
 } from '@nestjs/common';
@@ -14,9 +17,14 @@ import {ApiBearerAuth, ApiOperation, ApiParam, ApiTags} from '@nestjs/swagger';
 import {User} from '@app/auth/auth.decorator';
 import {JwtAuthGuard} from '@app/auth/authGuard';
 import {AuthUserDto} from '@app/auth/dto';
-import {InvestHistoryDto, UrlQueryInvestHistoryListDto} from '@app/invest/dto';
-import {InvestHistoryService, InvestItemService} from '@app/invest/service';
-import {ApiListResponse, ApiOkResponseCustom} from '@common/decorator/swagger';
+import {
+  CreateInvestHistoryDto,
+  InvestHistoryDto,
+  InvestHistoryDtoSimple,
+  UrlQueryInvestHistoryListDto,
+} from '@app/invest/dto';
+import {InvestHistoryService, InvestItemService, InvestUnitService} from '@app/invest/service';
+import {ApiConsumesCustom, ApiListResponse, ApiOkResponseCustom} from '@common/decorator/swagger';
 import {ListResponseDto, OkResponseDto} from '@common/dto';
 import {DataNotFoundException} from '@common/exception';
 import {DateHelper} from '@common/helper';
@@ -102,6 +110,33 @@ export class HistoryController {
 
     //set vars: dto
     const historyDto = new InvestHistoryDto(historyEntity);
+
+    return new OkResponseDto(historyDto);
+  }
+
+  @ApiOperation({summary: '히스토리 생성'})
+  @ApiConsumesCustom()
+  @ApiParam({name: 'itemIdx', required: true, description: '상품 IDX', type: 'number'})
+  @ApiOkResponseCustom({model: InvestHistoryDtoSimple})
+  @Post('/:itemIdx(\\d+)')
+  @HttpCode(200)
+  async createHistory(
+    @User() user: AuthUserDto,
+    @Param('itemIdx', new RequiredPipe(), new ParseIntPipe()) itemIdx: number,
+    @Body() createDto: CreateInvestHistoryDto
+  ) {
+    //상품 유무 확인
+    const hasItem = await this.investItemService.hasItem({
+      item_idx: itemIdx,
+      user_idx: user.userIdx,
+    });
+    if (!hasItem) throw new DataNotFoundException('invest item');
+
+    //히스토리 생성
+    const historyEntity = await this.investHistoryService.createHistory(itemIdx, createDto);
+
+    //set vars: dto
+    const historyDto = new InvestHistoryDtoSimple(historyEntity);
 
     return new OkResponseDto(historyDto);
   }

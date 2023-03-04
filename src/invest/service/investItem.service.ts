@@ -163,6 +163,15 @@ export class InvestItemService {
   }
 
   /**
+   * 상품에 등록된 단위 여부 반환
+   * @param itemIdx
+   * @param unitIdx
+   */
+  async hasUnit(itemIdx: number, unitIdx: number): Promise<boolean> {
+    return this.investUnitRepository.existsBy({unit_idx: unitIdx, item_idx: itemIdx});
+  }
+
+  /**
    * 상품에 단위 추가
    * @param itemIdx 상품 idx
    * @param unitIdxs 추가할 단위 idx 목록

@@ -1,6 +1,6 @@
-import {ApiProperty} from '@nestjs/swagger';
+import {ApiProperty, PickType} from '@nestjs/swagger';
 import {Expose, Transform} from 'class-transformer';
-import {IsNotEmpty, IsNumber, IsOptional} from 'class-validator';
+import {IsNotEmpty, IsNumber, IsOptional, ValidateIf} from 'class-validator';
 
 import {
   EInvestHistoryInOutTypeLabel,
@@ -45,7 +45,7 @@ export class InvestHistoryDtoSimple extends DefaultDto {
 
   @ApiProperty({description: '기록 일자', required: true})
   @Expose()
-  @IsDateString({allowEmptyString: false})
+  @IsDateOnlyString({allowEmptyString: false})
   @IsNotEmpty()
   @Transform(({value}) => DtoTransform.parseDate(value, 'YYYY-MM-DD'))
   historyDate: string;
@@ -77,7 +77,8 @@ export class InvestHistoryDtoSimple extends DefaultDto {
   })
   @Expose()
   @IsEnum(EInvestHistoryInOutType, {allowEmptyString: true})
-  @IsOptional()
+  @IsNotEmpty()
+  @ValidateIf((obj) => obj?.historyType == EInvestHistoryType.inout)
   @Transform(({value}) => DtoTransform.trim(value))
   inoutType?: EInvestHistoryInOutType;
 
@@ -100,7 +101,8 @@ export class InvestHistoryDtoSimple extends DefaultDto {
   })
   @Expose()
   @IsEnum(EInvestHistoryRevenueType, {allowEmptyString: true})
-  @IsOptional()
+  @IsNotEmpty()
+  @ValidateIf((obj) => obj?.historyType == EInvestHistoryType.revenue)
   @Transform(({value}) => DtoTransform.trim(value))
   revenueType?: EInvestHistoryRevenueType;
 
@@ -207,3 +209,16 @@ export class UrlQueryInvestHistoryListDto extends DefaultDto {
   @Transform(({value}) => DtoTransform.trim(value))
   historyMonth?: string;
 }
+
+/**
+ * 히스토리 생성 DTO
+ */
+export class CreateInvestHistoryDto extends PickType(InvestHistoryDtoSimple, [
+  'unitIdx',
+  'historyDate',
+  'historyType',
+  'inoutType',
+  'revenueType',
+  'val',
+  'memo',
+] as const) {}
