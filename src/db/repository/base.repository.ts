@@ -1,4 +1,4 @@
-import {BaseEntity, Repository, SelectQueryBuilder} from 'typeorm';
+import {BaseEntity, QueryRunner, Repository, SelectQueryBuilder} from 'typeorm';
 
 import {CommonHelper} from '@common/helper';
 import {IFindAllResult, IQueryListOption} from '@db/db.interface';
@@ -7,8 +7,12 @@ export abstract class BaseRepository<Entity extends BaseEntity> extends Reposito
   /**
    * 커스텀된 select query builder 반환
    * @param joinOption join 옵션
+   * @param queryRunner 트랜잭션 사용시
    */
-  abstract getCustomQueryBuilder<JoinType>(joinOption?: JoinType): SelectQueryBuilder<Entity>;
+  abstract getCustomQueryBuilder<JoinType>(
+    joinOption?: JoinType,
+    queryRunner?: QueryRunner
+  ): SelectQueryBuilder<Entity>;
 
   /**
    * select query builder에 조건 설정
@@ -24,9 +28,10 @@ export abstract class BaseRepository<Entity extends BaseEntity> extends Reposito
    * 데이터 유무
    * - 커스텀된 select query builder 사용
    * @param condition 조건
+   * @param queryRunner 트랜잭션 사용시
    */
-  async existsBy<CondType>(condition: CondType): Promise<boolean> {
-    let queryBuilder = this.getCustomQueryBuilder();
+  async existsBy<CondType>(condition: CondType, queryRunner?: QueryRunner): Promise<boolean> {
+    let queryBuilder = this.getCustomQueryBuilder(null, queryRunner);
     queryBuilder = this.setQueryBuilderCondition<CondType>(queryBuilder, condition);
     return !!(await queryBuilder.getCount());
   }
@@ -34,10 +39,14 @@ export abstract class BaseRepository<Entity extends BaseEntity> extends Reposito
   /**
    * 데이터 갯수
    * - 커스텀된 select query builder 사용
-   * @param condition
+   * @param condition 조건
+   * @param queryRunner 트랜잭션 사용시
    */
-  async countByCondition<CondType>(condition: CondType): Promise<number> {
-    let queryBuilder = this.getCustomQueryBuilder();
+  async countByCondition<CondType>(
+    condition: CondType,
+    queryRunner?: QueryRunner
+  ): Promise<number> {
+    let queryBuilder = this.getCustomQueryBuilder(null, queryRunner);
     queryBuilder = this.setQueryBuilderCondition<CondType>(queryBuilder, condition);
     return await queryBuilder.getCount();
   }
@@ -47,12 +56,14 @@ export abstract class BaseRepository<Entity extends BaseEntity> extends Reposito
    * - 커스텀된 select query builder 사용
    * @param condition 조건
    * @param joinOption join 옵션
+   * @param queryRunner 트랜잭션 사용시
    */
   async findByCondition<CondType, JoinType>(
     condition: CondType,
-    joinOption?: JoinType
+    joinOption?: JoinType,
+    queryRunner?: QueryRunner
   ): Promise<Entity | null> {
-    let queryBuilder = this.getCustomQueryBuilder<JoinType>(joinOption);
+    let queryBuilder = this.getCustomQueryBuilder<JoinType>(joinOption, queryRunner);
     queryBuilder = this.setQueryBuilderCondition<CondType>(queryBuilder, condition);
     return queryBuilder.getOne();
   }
@@ -63,18 +74,20 @@ export abstract class BaseRepository<Entity extends BaseEntity> extends Reposito
    * @param condition 조건
    * @param listOption list 옵션
    * @param joinOption join 옵션
+   * @param queryRunner 트랜잭션 사용시
    */
   async findAllByCondition<CondType, JoinType>(
     condition: CondType,
     listOption?: IQueryListOption,
-    joinOption?: JoinType
+    joinOption?: JoinType,
+    queryRunner?: QueryRunner
   ): Promise<IFindAllResult<Entity>> {
     const page = listOption?.page || 1;
     const pageSize = listOption?.pageSize || 20;
     const sort = listOption?.sort ?? null;
     const getAll = listOption?.getAll ?? false;
 
-    let queryBuilder = this.getCustomQueryBuilder<JoinType>(joinOption);
+    let queryBuilder = this.getCustomQueryBuilder<JoinType>(joinOption, queryRunner);
     queryBuilder = this.setQueryBuilderCondition<CondType>(queryBuilder, condition);
 
     if (sort) {

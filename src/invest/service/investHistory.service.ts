@@ -92,6 +92,7 @@ export class InvestHistoryService {
 
     //히스토리 insert
     const historyEntity = this.investHistoryRepository.create();
+    historyEntity.item_idx = itemIdx;
     historyEntity.unit_idx = unitIdx;
     historyEntity.history_date = historyDate;
     historyEntity.history_type = historyType;

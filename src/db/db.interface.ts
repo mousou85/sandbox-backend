@@ -1,3 +1,21 @@
+import {EComparisonOp} from '@db/db.enum';
+
+/**
+ * SQL 쿼리 날짜 범위 조건
+ */
+export interface IQueryDateRangeCondition {
+  begin: string;
+  end: string;
+}
+
+/**
+ * SQL 쿼리 날짜 조건
+ */
+export interface IQueryDateCondition {
+  value: string;
+  op: EComparisonOp;
+}
+
 /**
  * 정렬 옵션
  * - 커스텀된 select query builder에서 사용

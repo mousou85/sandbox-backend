@@ -1,20 +1,59 @@
 import {BaseEntity, SelectQueryBuilder} from 'typeorm';
 
+import {IQueryDateCondition, IQueryDateRangeCondition} from '@db/db.interface';
+
+/**
+ * 헬퍼 옵션
+ * @interface
+ * @property [paramName] bind parameter 이름
+ * @property [operator] where 조건 연결 연산자
+ */
+interface IHelperOpts {
+  paramName?: string;
+  operator?: 'and' | 'or';
+}
+
 export class TypeOrmHelper {
+  /**
+   * 날짜 조건 추가
+   * @param queryBuilder
+   * @param column
+   * @param condition
+   * @param opts
+   */
+  static addDateCondition<Entity extends BaseEntity>(
+    queryBuilder: SelectQueryBuilder<Entity>,
+    column: string,
+    condition: IQueryDateCondition | IQueryDateRangeCondition,
+    opts: IHelperOpts = {operator: 'and'}
+  ) {
+    const operator = opts?.operator ?? 'and';
+    const paramName = opts?.paramName ?? column.replace(/\./g, '_');
+
+    if ('op' in condition) {
+      const query = `${column} ${condition.op} :${paramName}`;
+      const param = {[paramName]: condition.value};
+
+      operator == 'and' ? queryBuilder.andWhere(query, param) : queryBuilder.orWhere(query, param);
+    } else {
+      this.addBetweenClause(queryBuilder, column, condition.begin, condition.end, {
+        paramName: paramName,
+        operator: operator,
+      });
+    }
+  }
   /**
    * in 조건 추가
    * @param queryBuilder select query builder
    * @param column 대상 컬럼
    * @param value 조건 값
    * @param opts 옵션
-   * @param [opts.paramName] bind parameter 이름
-   * @param [opts.operator=and] where 조건 연결 연산자
    */
   static addInClause<Entity extends BaseEntity>(
     queryBuilder: SelectQueryBuilder<Entity>,
     column: string,
     value: string[] | number[],
-    opts: {paramName?: string; operator?: 'and' | 'or'} = {operator: 'and'}
+    opts: IHelperOpts = {operator: 'and'}
   ) {
     const operator = opts?.operator ?? 'and';
     const paramName = opts?.paramName ?? column.replace(/\./g, '_');
@@ -31,14 +70,12 @@ export class TypeOrmHelper {
    * @param column 대상 컬럼
    * @param value 조건 값
    * @param opts 옵션
-   * @param [opts.paramName] bind parameter 이름
-   * @param [opts.operator=and] where 조건 연결 연산자
    */
   static addLikeClause<Entity extends BaseEntity>(
     queryBuilder: SelectQueryBuilder<Entity>,
     column: string,
     value: string,
-    opts: {paramName?: string; operator?: 'and' | 'or'} = {operator: 'and'}
+    opts: IHelperOpts = {operator: 'and'}
   ) {
     const operator = opts?.operator ?? 'and';
     const paramName = opts?.paramName ?? column.replace(/\./g, '_');
@@ -62,7 +99,7 @@ export class TypeOrmHelper {
     column: string,
     beginDate: string,
     endDate: string,
-    opts: {paramName?: string; operator?: 'and' | 'or'} = {operator: 'and'}
+    opts: IHelperOpts = {operator: 'and'}
   ) {
     const operator = opts?.operator ?? 'and';
     const paramName = opts?.paramName ?? column.replace(/\./g, '_');

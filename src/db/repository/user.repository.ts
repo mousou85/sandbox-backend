@@ -1,6 +1,6 @@
 import {Injectable} from '@nestjs/common';
 import {InjectRepository} from '@nestjs/typeorm';
-import {EntityManager, Repository, SelectQueryBuilder} from 'typeorm';
+import {QueryRunner, Repository, SelectQueryBuilder} from 'typeorm';
 
 import {EYNState} from '@db/db.enum';
 import {IFindAllResult, IQueryListOption} from '@db/db.interface';
@@ -34,8 +34,8 @@ export class UserRepository extends BaseRepository<UserEntity> {
     super(repository.target, repository.manager, repository.queryRunner);
   }
 
-  getCustomQueryBuilder(joinOption?: IUserJoinOption) {
-    const builder = this.repository.createQueryBuilder('user');
+  getCustomQueryBuilder(joinOption?: IUserJoinOption, queryRunner?: QueryRunner) {
+    const builder = this.repository.createQueryBuilder('user', queryRunner);
     if (joinOption?.passwordSalt) {
       builder.innerJoinAndSelect('user.userPasswordSalt', 'passwordSalt');
     }
@@ -78,27 +78,29 @@ export class UserRepository extends BaseRepository<UserEntity> {
     return queryBuilder;
   }
 
-  async existsBy(condition: IUserCondition): Promise<boolean> {
-    return super.existsBy(condition);
+  async existsBy(condition: IUserCondition, queryRunner?: QueryRunner): Promise<boolean> {
+    return super.existsBy(condition, queryRunner);
   }
 
-  async countByCondition(condition: IUserCondition): Promise<number> {
-    return super.countByCondition(condition);
+  async countByCondition(condition: IUserCondition, queryRunner?: QueryRunner): Promise<number> {
+    return super.countByCondition(condition, queryRunner);
   }
 
   async findByCondition(
     condition: IUserCondition,
-    joinOption?: IUserJoinOption
+    joinOption?: IUserJoinOption,
+    queryRunner?: QueryRunner
   ): Promise<UserEntity | null> {
-    return super.findByCondition(condition, joinOption);
+    return super.findByCondition(condition, joinOption, queryRunner);
   }
 
   async findAllByCondition(
     condition: IUserCondition,
     listOption?: IQueryListOption,
-    joinOption?: IUserJoinOption
+    joinOption?: IUserJoinOption,
+    queryRunner?: QueryRunner
   ): Promise<IFindAllResult<UserEntity>> {
-    return super.findAllByCondition(condition, listOption, joinOption);
+    return super.findAllByCondition(condition, listOption, joinOption, queryRunner);
   }
 
   /**
@@ -114,13 +116,9 @@ export class UserRepository extends BaseRepository<UserEntity> {
    * password salt 저장/수정
    * @param userIdx 유저IDX
    * @param salt password salt
-   * @param entityManager 트랜잭션 사용하는 경우 queryRunner.manager 객체
+   * @param queryRunner 트랜잭션 사용하는 경우
    */
-  async setPasswordSalt(
-    userIdx: number,
-    salt: string,
-    entityManager: EntityManager
-  ): Promise<void> {
+  async setPasswordSalt(userIdx: number, salt: string, queryRunner?: QueryRunner): Promise<void> {
     let entity = await this.userPasswordSaltRepository.findOneBy({user_idx: userIdx});
     if (!entity) {
       entity = this.userPasswordSaltRepository.create();
@@ -128,8 +126,8 @@ export class UserRepository extends BaseRepository<UserEntity> {
     }
     entity.salt = salt;
 
-    if (entityManager) {
-      await entityManager.save(entity, {reload: false});
+    if (queryRunner) {
+      await queryRunner.manager.save(entity, {reload: false});
     } else {
       await this.userPasswordSaltRepository.save(entity, {reload: false});
     }
@@ -148,13 +146,9 @@ export class UserRepository extends BaseRepository<UserEntity> {
    * otp secret 저장/수정
    * @param userIdx
    * @param otpSecret
-   * @param entityManager
+   * @param queryRunner
    */
-  async setOtpSecret(
-    userIdx: number,
-    otpSecret: string,
-    entityManager: EntityManager
-  ): Promise<void> {
+  async setOtpSecret(userIdx: number, otpSecret: string, queryRunner?: QueryRunner): Promise<void> {
     let entity = await this.userOtpRepository.findOneBy({user_idx: userIdx});
     if (!entity) {
       entity = this.userOtpRepository.create();
@@ -162,8 +156,8 @@ export class UserRepository extends BaseRepository<UserEntity> {
     }
     entity.secret = otpSecret;
 
-    if (entityManager) {
-      await entityManager.save(entity, {reload: false});
+    if (queryRunner) {
+      await queryRunner.manager.save(entity, {reload: false});
     } else {
       await this.userOtpRepository.save(entity, {reload: false});
     }

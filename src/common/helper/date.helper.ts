@@ -17,8 +17,16 @@ export class DateHelper {
    * 해당 월의 마지막 일 반환
    * @param date
    */
-  static endOfDay(date?: string | number | Date | dayjs.Dayjs): string {
+  static endOfMonth(date?: string | number | Date | dayjs.Dayjs): string {
     return this.endOf(date, 'month', 'YYYY-MM-DD');
+  }
+
+  /**
+   * 해당 년도 마지막 일 반환
+   * @param date
+   */
+  static endOfYear(date?: string | number | Date | dayjs.Dayjs): string {
+    return this.endOf(date, 'year', 'YYYY-MM-DD');
   }
 
   /**

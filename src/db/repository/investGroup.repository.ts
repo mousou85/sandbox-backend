@@ -1,6 +1,6 @@
 import {Injectable} from '@nestjs/common';
 import {InjectRepository} from '@nestjs/typeorm';
-import {Repository, SelectQueryBuilder} from 'typeorm';
+import {QueryRunner, Repository, SelectQueryBuilder} from 'typeorm';
 
 import {TypeOrmHelper} from '@common/helper';
 import {IFindAllResult, IQueryListOption} from '@db/db.interface';
@@ -30,8 +30,8 @@ export class InvestGroupRepository extends BaseRepository<InvestGroupEntity> {
     super(repository.target, repository.manager, repository.queryRunner);
   }
 
-  getCustomQueryBuilder(joinOption?: IInvestGroupJoinOption) {
-    const builder = this.repository.createQueryBuilder('group');
+  getCustomQueryBuilder(joinOption?: IInvestGroupJoinOption, queryRunner?: QueryRunner) {
+    const builder = this.repository.createQueryBuilder('group', queryRunner);
     if (joinOption?.user) {
       builder.innerJoinAndSelect('group.user', 'user');
     }
@@ -68,26 +68,31 @@ export class InvestGroupRepository extends BaseRepository<InvestGroupEntity> {
     return queryBuilder;
   }
 
-  async existsBy(condition: IInvestGroupCondition): Promise<boolean> {
-    return super.existsBy(condition);
+  async existsBy(condition: IInvestGroupCondition, queryRunner?: QueryRunner): Promise<boolean> {
+    return super.existsBy(condition, queryRunner);
   }
 
-  async countByCondition(condition: IInvestGroupCondition): Promise<number> {
-    return super.countByCondition(condition);
+  async countByCondition(
+    condition: IInvestGroupCondition,
+    queryRunner?: QueryRunner
+  ): Promise<number> {
+    return super.countByCondition(condition, queryRunner);
   }
 
   async findByCondition(
     condition: IInvestGroupCondition,
-    joinOption?: IInvestGroupJoinOption
+    joinOption?: IInvestGroupJoinOption,
+    queryRunner?: QueryRunner
   ): Promise<InvestGroupEntity | null> {
-    return super.findByCondition(condition, joinOption);
+    return super.findByCondition(condition, joinOption, queryRunner);
   }
 
   async findAllByCondition(
     condition: IInvestGroupCondition,
     listOption?: IQueryListOption,
-    joinOption?: IInvestGroupJoinOption
+    joinOption?: IInvestGroupJoinOption,
+    queryRunner?: QueryRunner
   ): Promise<IFindAllResult<InvestGroupEntity>> {
-    return super.findAllByCondition(condition, listOption, joinOption);
+    return super.findAllByCondition(condition, listOption, joinOption, queryRunner);
   }
 }

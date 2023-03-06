@@ -1,6 +1,6 @@
 import {ApiProperty, PickType} from '@nestjs/swagger';
 import {Expose, Transform} from 'class-transformer';
-import {IsNotEmpty, IsNumber, IsOptional, ValidateIf} from 'class-validator';
+import {IsNotEmpty, IsNumberString, IsOptional, ValidateIf} from 'class-validator';
 
 import {
   EInvestHistoryInOutTypeLabel,
@@ -47,7 +47,7 @@ export class InvestHistoryDtoSimple extends DefaultDto {
   @Expose()
   @IsDateOnlyString({allowEmptyString: false})
   @IsNotEmpty()
-  @Transform(({value}) => DtoTransform.parseDate(value, 'YYYY-MM-DD'))
+  @Transform(({value}) => DtoTransform.trim(value))
   historyDate: string;
 
   @ApiProperty({
@@ -119,7 +119,7 @@ export class InvestHistoryDtoSimple extends DefaultDto {
 
   @ApiProperty({description: '값', required: true, type: 'number'})
   @Expose()
-  @IsNumber()
+  @IsNumberString()
   @IsNotEmpty()
   val: number;
 

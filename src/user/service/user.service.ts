@@ -1,12 +1,14 @@
-import {Injectable} from '@nestjs/common';
-import {IUserJoinOption, UserLoginLogRepository, UserRepository} from '@db/repository';
 import * as crypto from 'crypto';
-import {EUserLoginLogType, UserEntity} from '@db/entity';
-import {DataNotFoundException} from '@common/exception';
-import {DataSource} from 'typeorm';
-import {UpdateUserInfoDto} from '@app/user/dto';
-import * as speakeasy from 'speakeasy';
+
+import {Injectable} from '@nestjs/common';
 import * as qrcode from 'qrcode';
+import * as speakeasy from 'speakeasy';
+import {DataSource} from 'typeorm';
+
+import {UpdateUserInfoDto} from '@app/user/dto';
+import {DataNotFoundException} from '@common/exception';
+import {EUserLoginLogType, UserEntity} from '@db/entity';
+import {IUserJoinOption, UserLoginLogRepository, UserRepository} from '@db/repository';
 
 @Injectable()
 export class UserService {
@@ -90,7 +92,7 @@ export class UserService {
       const entityManager = queryRunner.manager;
 
       //password salt 업데이트
-      await this.userRepository.setPasswordSalt(userIdx, salt, entityManager);
+      await this.userRepository.setPasswordSalt(userIdx, salt, queryRunner);
 
       //패스워드 업데이트
       userEntity.password = hashedPassword;
@@ -163,7 +165,7 @@ export class UserService {
       const entityManager = queryRunner.manager;
 
       //otp secret 저장/수정
-      await this.userRepository.setOtpSecret(userIdx, otpSecret, entityManager);
+      await this.userRepository.setOtpSecret(userIdx, otpSecret, queryRunner);
 
       //OTP 사용 여부 갱신
       userEntity.use_otp = 'y';

@@ -23,7 +23,7 @@ import {
   InvestHistoryDtoSimple,
   UrlQueryInvestHistoryListDto,
 } from '@app/invest/dto';
-import {InvestHistoryService, InvestItemService, InvestUnitService} from '@app/invest/service';
+import {InvestHistoryService, InvestItemService, InvestSummaryService} from '@app/invest/service';
 import {ApiConsumesCustom, ApiListResponse, ApiOkResponseCustom} from '@common/decorator/swagger';
 import {ListResponseDto, OkResponseDto} from '@common/dto';
 import {DataNotFoundException} from '@common/exception';
@@ -39,7 +39,8 @@ export class HistoryController {
   constructor(
     @Inject(Logger) private logger: LoggerService,
     private investHistoryService: InvestHistoryService,
-    private investItemService: InvestItemService
+    private investItemService: InvestItemService,
+    private investSummaryService: InvestSummaryService
   ) {}
 
   @ApiOperation({summary: '히스토리 리스트 조회'})
@@ -67,7 +68,7 @@ export class HistoryController {
     if (urlQuery.historyMonth) {
       queryCondition.history_date = {
         begin: `${urlQuery.historyMonth}-01`,
-        end: DateHelper.endOfDay(`${urlQuery.historyMonth}-01`),
+        end: DateHelper.endOfMonth(`${urlQuery.historyMonth}-01`),
       };
     }
 

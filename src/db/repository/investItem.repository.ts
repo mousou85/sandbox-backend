@@ -1,6 +1,6 @@
 import {Injectable} from '@nestjs/common';
 import {InjectRepository} from '@nestjs/typeorm';
-import {Repository, SelectQueryBuilder} from 'typeorm';
+import {QueryRunner, Repository, SelectQueryBuilder} from 'typeorm';
 
 import {TypeOrmHelper} from '@common/helper';
 import {EYNState} from '@db/db.enum';
@@ -31,8 +31,8 @@ export class InvestItemRepository extends BaseRepository<InvestItemEntity> {
     super(repository.target, repository.manager, repository.queryRunner);
   }
 
-  getCustomQueryBuilder(joinOption?: IInvestItemJoinOption) {
-    const builder = this.repository.createQueryBuilder('item');
+  getCustomQueryBuilder(joinOption?: IInvestItemJoinOption, queryRunner?: QueryRunner) {
+    const builder = this.repository.createQueryBuilder('item', queryRunner);
     if (joinOption?.user) {
       builder.innerJoinAndSelect('group.user', 'user');
     }
@@ -75,26 +75,31 @@ export class InvestItemRepository extends BaseRepository<InvestItemEntity> {
     return queryBuilder;
   }
 
-  async existsBy(condition: IInvestItemCondition): Promise<boolean> {
-    return super.existsBy(condition);
+  async existsBy(condition: IInvestItemCondition, queryRunner?: QueryRunner): Promise<boolean> {
+    return super.existsBy(condition, queryRunner);
   }
 
-  async countByCondition(condition: IInvestItemCondition): Promise<number> {
-    return super.countByCondition(condition);
+  async countByCondition(
+    condition: IInvestItemCondition,
+    queryRunner?: QueryRunner
+  ): Promise<number> {
+    return super.countByCondition(condition, queryRunner);
   }
 
   async findByCondition(
     condition: IInvestItemCondition,
-    joinOption?: IInvestItemJoinOption
+    joinOption?: IInvestItemJoinOption,
+    queryRunner?: QueryRunner
   ): Promise<InvestItemEntity | null> {
-    return super.findByCondition(condition, joinOption);
+    return super.findByCondition(condition, joinOption, queryRunner);
   }
 
   async findAllByCondition(
     condition: IInvestItemCondition,
     listOption?: IQueryListOption,
-    joinOption?: IInvestItemJoinOption
+    joinOption?: IInvestItemJoinOption,
+    queryRunner?: QueryRunner
   ): Promise<IFindAllResult<InvestItemEntity>> {
-    return super.findAllByCondition(condition, listOption, joinOption);
+    return super.findAllByCondition(condition, listOption, joinOption, queryRunner);
   }
 }

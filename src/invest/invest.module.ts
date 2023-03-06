@@ -11,6 +11,7 @@ import {
   InvestGroupService,
   InvestHistoryService,
   InvestItemService,
+  InvestSummaryService,
   InvestUnitService,
 } from '@app/invest/service';
 import {DbModule} from '@db/db.module';
@@ -24,6 +25,7 @@ import {DbModule} from '@db/db.module';
     InvestItemService,
     InvestUnitService,
     InvestHistoryService,
+    InvestSummaryService,
   ],
   exports: [],
 })
