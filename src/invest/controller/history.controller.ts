@@ -139,6 +139,13 @@ export class HistoryController {
     //set vars: dto
     const historyDto = new InvestHistoryDtoSimple(historyEntity);
 
+    //요약 데이터 생성/갱신
+    await this.investSummaryService.upsertSummary(
+      itemIdx,
+      createDto.unitIdx,
+      createDto.historyDate
+    );
+
     return new OkResponseDto(historyDto);
   }
 }

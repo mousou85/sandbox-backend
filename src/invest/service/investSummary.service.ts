@@ -1,4 +1,5 @@
 import {Injectable} from '@nestjs/common';
+import dayjs from 'dayjs';
 import {DataSource, QueryRunner} from 'typeorm';
 
 import {DataNotFoundException} from '@common/exception';
@@ -73,16 +74,45 @@ export class InvestSummaryService {
   }
 
   /**
+   * 모든 요약 데이터 insert/update
+   * @param itemIdx
+   * @param unitIdx
+   * @param targetDate
+   */
+  async upsertSummary(itemIdx: number, unitIdx: number, targetDate: string) {
+    //트랜잭션 처리
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+    try {
+      await this.upsertMonthSummary(itemIdx, unitIdx, targetDate, queryRunner);
+      await this.updateNextMonthSummary(itemIdx, unitIdx, targetDate, queryRunner);
+
+      await this.upsertYearSummary(itemIdx, unitIdx, targetDate, queryRunner);
+      await this.updateNextYearSummary(itemIdx, unitIdx, targetDate, queryRunner);
+
+      await this.upsertTotalSummary(itemIdx, unitIdx, queryRunner);
+
+      await queryRunner.commitTransaction();
+    } catch (err) {
+      await queryRunner.rollbackTransaction();
+      throw err;
+    } finally {
+      await queryRunner.release();
+    }
+  }
+
+  /**
    * 월간 요약 데이터 insert/update
    * @param itemIdx 상품 idx
-   * @param historyDate 요약 일자
    * @param unitIdx 단위 idx
+   * @param targetDate 대상 요약 일자
    * @param queryRunner 트랜잭션 사용시
    */
   async upsertMonthSummary(
     itemIdx: number,
-    historyDate: string,
     unitIdx: number,
+    targetDate: string,
     queryRunner?: QueryRunner
   ): Promise<InvestSummaryDateEntity> {
     const entityManager = queryRunner ? queryRunner.manager : null;
@@ -102,7 +132,7 @@ export class InvestSummaryService {
     if (!hasUnit) throw new DataNotFoundException('invest unit');
 
     //set vars: 날짜 관련
-    const startDate = DateHelper.format(historyDate, 'YYYY-MM-01');
+    const startDate = DateHelper.format(targetDate, 'YYYY-MM-01');
     const endDate = DateHelper.endOfMonth(startDate);
     const summaryDate = startDate;
 
@@ -214,16 +244,67 @@ export class InvestSummaryService {
   }
 
   /**
+   * 이후 월간 요약 데이터 update
+   * @param itemIdx 상품 idx
+   * @param unitIdx 단위 idx
+   * @param targetDate 대상 요약 일자
+   * @param queryRunner 트랜잭션 사용시
+   */
+  async updateNextMonthSummary(
+    itemIdx: number,
+    unitIdx: number,
+    targetDate: string,
+    queryRunner?: QueryRunner
+  ) {
+    //상품 유무 체크
+    const hasItem = await this.investItemRepository.existsBy({item_idx: itemIdx}, queryRunner);
+    if (!hasItem) throw new DataNotFoundException('invest item');
+
+    //단위 유무 체크
+    const hasUnit = await this.investUnitRepository.existsBy(
+      {
+        unit_idx: unitIdx,
+        item_idx: itemIdx,
+      },
+      queryRunner
+    );
+    if (!hasUnit) throw new DataNotFoundException('invest unit');
+
+    //set vars: 날짜 관련
+    const summaryDate = DateHelper.format('YYYY-MM-01');
+
+    //set vars: 대상이 될 요약 데이터 기간 범위
+    const dateRange = await this.investSummaryDateRepository.findMonthSummaryDateRange(
+      itemIdx,
+      unitIdx,
+      summaryDate,
+      queryRunner
+    );
+    if (!dateRange || !dateRange.minDate || !dateRange.maxDate) return;
+
+    const minDate = dayjs(dateRange.minDate);
+    const maxDate = dayjs(dateRange.maxDate);
+
+    let loopDate = minDate;
+    while (loopDate <= maxDate) {
+      //월간 요약 데이터 갱신
+      await this.upsertMonthSummary(itemIdx, unitIdx, loopDate.format('YYYY-MM-DD'), queryRunner);
+
+      loopDate = loopDate.add(1, 'month');
+    }
+  }
+
+  /**
    * 년간 요약 데이터 insert/update
    * @param itemIdx 상품 idx
-   * @param historyDate 요약 일자
    * @param unitIdx 단위 idx
+   * @param targetDate 대상 요약 일자
    * @param queryRunner 트랜잭션 사용시
    */
   async upsertYearSummary(
     itemIdx: number,
-    historyDate: string,
     unitIdx: number,
+    targetDate: string,
     queryRunner?: QueryRunner
   ): Promise<InvestSummaryDateEntity> {
     const entityManager = queryRunner ? queryRunner.manager : null;
@@ -243,7 +324,7 @@ export class InvestSummaryService {
     if (!hasUnit) throw new DataNotFoundException('invest unit');
 
     //set vars: 날짜 관련
-    const startDate = DateHelper.format(historyDate, 'YYYY-01-01');
+    const startDate = DateHelper.format(targetDate, 'YYYY-01-01');
     const endDate = DateHelper.endOfYear(startDate);
     const summaryDate = startDate;
 
@@ -348,6 +429,50 @@ export class InvestSummaryService {
     }
 
     return summaryDateEntity;
+  }
+
+  /**
+   * 이후 년간 요약 데이터 update
+   * @param itemIdx 상품 idx
+   * @param unitIdx 단위 idx
+   * @param targetDate 대상 요약 일자
+   * @param queryRunner 트랜잭션 사용시
+   */
+  async updateNextYearSummary(
+    itemIdx: number,
+    unitIdx: number,
+    targetDate: string,
+    queryRunner?: QueryRunner
+  ) {
+    //상품 유무 체크
+    const hasItem = await this.investItemRepository.existsBy({item_idx: itemIdx}, queryRunner);
+    if (!hasItem) throw new DataNotFoundException('invest item');
+
+    //단위 유무 체크
+    const hasUnit = await this.investUnitRepository.existsBy(
+      {
+        unit_idx: unitIdx,
+        item_idx: itemIdx,
+      },
+      queryRunner
+    );
+    if (!hasUnit) throw new DataNotFoundException('invest unit');
+
+    //set vars: 날짜 관련
+    const summaryDate = DateHelper.format('YYYY-01-01');
+
+    //set vars: 대상이 년간 요약 데이터 기간 범위
+    const dateRange = await this.investSummaryDateRepository.findYearSummaryDateRange(
+      itemIdx,
+      unitIdx,
+      summaryDate,
+      queryRunner
+    );
+    if (!dateRange || !dateRange.minYear || !dateRange.maxYear) return;
+
+    for (let year = dateRange.minYear; year <= dateRange.maxYear; year++) {
+      await this.upsertYearSummary(itemIdx, unitIdx, `${year}-01-01`, queryRunner);
+    }
   }
 
   /**

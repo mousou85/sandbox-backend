@@ -2,7 +2,7 @@ import {Injectable} from '@nestjs/common';
 import {InjectRepository} from '@nestjs/typeorm';
 import {LessThan, QueryRunner, Repository, SelectQueryBuilder} from 'typeorm';
 
-import {TypeOrmHelper} from '@common/helper';
+import {DateHelper, TypeOrmHelper} from '@common/helper';
 import {EInvestSummaryDateType} from '@db/db.enum';
 import {
   IFindAllResult,
@@ -294,5 +294,66 @@ export class InvestSummaryDateRepository extends BaseRepository<InvestSummaryDat
       .andWhere('summary.unit_idx = :unit_idx', {unit_idx: unitIdx})
       .orderBy('summary.summary_date', 'DESC')
       .getRawOne();
+  }
+
+  /**
+   * 월간 요약 데이터 만들 범위 min/max 반환
+   * - 지정 날짜 이후의 월간 요약 데이터 갱신시 사용
+   * @param itemIdx
+   * @param unitIdx
+   * @param summaryDate
+   * @param queryRunner
+   */
+  async findMonthSummaryDateRange(
+    itemIdx: number,
+    unitIdx: number,
+    summaryDate: string,
+    queryRunner?: QueryRunner
+  ): Promise<{minDate: string; maxDate: string}> {
+    const result = await this.createQueryBuilder('summary', queryRunner)
+      .select(['MIN(summary_date) AS minDate', 'MAX(summary_date) AS maxDate'])
+      .where('summary.summary_date > :summary_date', {summary_date: summaryDate})
+      .andWhere('summary.item_idx = :item_idx', {item_idx: itemIdx})
+      .andWhere(`summary.summary_type = 'month'`)
+      .andWhere('summary.unit_idx = :unit_idx', {unit_idx: unitIdx})
+      .getRawOne();
+
+    const minDate =
+      result && result.minDate ? DateHelper.format(result.minDate, 'YYYY-MM-DD') : null;
+    const maxDate =
+      result && result.maxDate ? DateHelper.format(result.maxDate, 'YYYY-MM-DD') : null;
+
+    return {minDate: minDate, maxDate: maxDate};
+  }
+
+  /**
+   * 년간 요약 데이터 만들 범위 min/max 반환
+   * - 지정 날짜 이후의 년간 요약 데이터 갱신시 사용
+   * @param itemIdx
+   * @param unitIdx
+   * @param summaryDate
+   * @param queryRunner
+   */
+  async findYearSummaryDateRange(
+    itemIdx: number,
+    unitIdx: number,
+    summaryDate: string,
+    queryRunner?: QueryRunner
+  ): Promise<{minYear: number; maxYear: number}> {
+    const result = await this.createQueryBuilder('summary', queryRunner)
+      .select([
+        `MIN(DATE_FORMAT(summary_date, '%Y')) AS minYear`,
+        `MAX(DATE_FORMAT(summary_date, '%Y')) AS maxYear`,
+      ])
+      .where('summary.summary_date > :summary_date', {summary_date: summaryDate})
+      .andWhere('summary.item_idx = :item_idx', {item_idx: itemIdx})
+      .andWhere(`summary.summary_type = 'year'`)
+      .andWhere('summary.unit_idx = :unit_idx', {unit_idx: unitIdx})
+      .getRawOne();
+
+    const minYear = result && result.minYear ? parseInt(result.minYear) : null;
+    const maxYear = result && result.maxYear ? parseInt(result.maxYear) : null;
+
+    return {minYear: minYear, maxYear: maxYear};
   }
 }
