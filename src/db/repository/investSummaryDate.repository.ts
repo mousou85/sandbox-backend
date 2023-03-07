@@ -107,23 +107,47 @@ export class InvestSummaryDateRepository extends BaseRepository<InvestSummaryDat
   }
 
   /**
-   * 새 entity를 초기화해서 반환
+   * entity를 초기화해서 반환
    * @param itemIdx
    * @param unitIdx
    * @param summaryDate
    * @param summaryType
+   * @param queryRunner
    */
-  newEntity(
+  async findEntityAndReset(
     itemIdx: number,
     unitIdx: number,
     summaryDate: string,
-    summaryType: EInvestSummaryDateType
-  ): InvestSummaryDateEntity {
-    const entity = this.create();
-    entity.item_idx = itemIdx;
-    entity.unit_idx = unitIdx;
-    entity.summary_date = summaryDate;
-    entity.summary_type = summaryType;
+    summaryType: EInvestSummaryDateType,
+    queryRunner?: QueryRunner
+  ): Promise<InvestSummaryDateEntity> {
+    let entity;
+    if (queryRunner) {
+      entity = await queryRunner.manager.findOneBy<InvestSummaryDateEntity>(
+        InvestSummaryDateEntity,
+        {
+          summary_date: summaryDate,
+          item_idx: itemIdx,
+          summary_type: summaryType,
+          unit_idx: unitIdx,
+        }
+      );
+    } else {
+      entity = await this.findOneBy({
+        summary_date: summaryDate,
+        item_idx: itemIdx,
+        summary_type: summaryType,
+        unit_idx: unitIdx,
+      });
+    }
+
+    if (!entity) {
+      entity = new InvestSummaryDateEntity();
+      entity.item_idx = itemIdx;
+      entity.unit_idx = unitIdx;
+      entity.summary_date = summaryDate;
+      entity.summary_type = summaryType;
+    }
 
     entity.inout_total = 0;
 

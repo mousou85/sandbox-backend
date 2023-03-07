@@ -13,6 +13,14 @@ import {
   InvestUnitRepository,
 } from '@db/repository';
 
+/**
+ * 요약 데이터 insert/update 옵션
+ */
+interface IUpsertSummaryOptions {
+  ignoreItemCheck: boolean;
+  ignoreUnitCheck: boolean;
+}
+
 @Injectable()
 export class InvestSummaryService {
   constructor(
@@ -27,19 +35,26 @@ export class InvestSummaryService {
   /**
    * 년간/월간 요약 데이터의 항목중 재계산 필요한 항목 재계산
    * @param entity
-   * @param prevData
+   * @param prevSummaryEntity
    * @protected
    */
   protected recalculateDateSummary(
     entity: InvestSummaryDateEntity,
-    prevData: {
-      prevEarn: number;
-      prevEarnIncProceeds: number;
-      prevEarnRate: number;
-      prevEarnRateIncProceeds: number;
-    }
+    prevSummaryEntity: InvestSummaryDateEntity
   ): InvestSummaryDateEntity {
-    const {prevEarn, prevEarnIncProceeds, prevEarnRate, prevEarnRateIncProceeds} = prevData;
+    //이전 요약 데이터가 있으면 현재 요약 데이터 값 할당
+    if (prevSummaryEntity) {
+      entity.inout_principal_prev = prevSummaryEntity.inout_principal_total;
+      entity.inout_principal_total += prevSummaryEntity.inout_principal_total;
+
+      entity.inout_proceeds_prev = prevSummaryEntity.inout_proceeds_total;
+      entity.inout_proceeds_total += prevSummaryEntity.inout_proceeds_total;
+
+      entity.revenue_interest_prev = prevSummaryEntity.revenue_interest_total;
+      entity.revenue_interest_total += prevSummaryEntity.revenue_interest_total;
+
+      entity.revenue_eval_prev = prevSummaryEntity.revenue_eval;
+    }
 
     //유입/유출/평가 총합 계산
     entity.inout_total = entity.inout_principal_total + entity.inout_proceeds_total;
@@ -62,12 +77,20 @@ export class InvestSummaryService {
     // 이전 데이터 대비 수익율/수익금 계산
     entity.earn_prev_diff = entity.earn;
     entity.earn_inc_proceeds_prev_diff = entity.earn_inc_proceeds;
-    if (prevEarn != 0) entity.earn_prev_diff -= prevEarn;
-    if (prevEarnIncProceeds != 0) entity.earn_inc_proceeds_prev_diff -= prevEarnIncProceeds;
-    if (prevEarnRate != 0) entity.earn_rate_prev_diff = entity.earn_rate - prevEarnRate;
-    if (prevEarnRateIncProceeds != 0) {
-      entity.earn_rate_inc_proceeds_prev_diff =
-        entity.earn_rate_inc_proceeds - prevEarnRateIncProceeds;
+    if (prevSummaryEntity) {
+      if (prevSummaryEntity.earn != 0) {
+        entity.earn_prev_diff -= prevSummaryEntity.earn;
+      }
+      if (prevSummaryEntity.earn_inc_proceeds != 0) {
+        entity.earn_inc_proceeds_prev_diff -= prevSummaryEntity.earn_inc_proceeds;
+      }
+      if (prevSummaryEntity.earn_rate != 0) {
+        entity.earn_rate_prev_diff = entity.earn_rate - prevSummaryEntity.earn_rate;
+      }
+      if (prevSummaryEntity.earn_rate_inc_proceeds != 0) {
+        entity.earn_rate_inc_proceeds_prev_diff =
+          entity.earn_rate_inc_proceeds - prevSummaryEntity.earn_rate_inc_proceeds;
+      }
     }
 
     return entity;
@@ -78,28 +101,26 @@ export class InvestSummaryService {
    * @param itemIdx
    * @param unitIdx
    * @param targetDate
+   * @param queryRunner
+   * @param opts
    */
-  async upsertSummary(itemIdx: number, unitIdx: number, targetDate: string) {
-    //트랜잭션 처리
-    const queryRunner = this.dataSource.createQueryRunner();
-    await queryRunner.connect();
-    await queryRunner.startTransaction();
-    try {
-      await this.upsertMonthSummary(itemIdx, unitIdx, targetDate, queryRunner);
-      await this.updateNextMonthSummary(itemIdx, unitIdx, targetDate, queryRunner);
+  async upsertSummary(
+    itemIdx: number,
+    unitIdx: number,
+    targetDate: string,
+    queryRunner?: QueryRunner,
+    opts?: IUpsertSummaryOptions
+  ) {
+    //월간 요약 데이터 생성/갱신
+    await this.upsertMonthSummary(itemIdx, unitIdx, targetDate, queryRunner, opts);
+    await this.updateNextMonthSummary(itemIdx, unitIdx, targetDate, queryRunner, opts);
 
-      await this.upsertYearSummary(itemIdx, unitIdx, targetDate, queryRunner);
-      await this.updateNextYearSummary(itemIdx, unitIdx, targetDate, queryRunner);
+    //년간 요약 데이터 생성/갱신
+    await this.upsertYearSummary(itemIdx, unitIdx, targetDate, queryRunner, opts);
+    await this.updateNextYearSummary(itemIdx, unitIdx, targetDate, queryRunner, opts);
 
-      await this.upsertTotalSummary(itemIdx, unitIdx, queryRunner);
-
-      await queryRunner.commitTransaction();
-    } catch (err) {
-      await queryRunner.rollbackTransaction();
-      throw err;
-    } finally {
-      await queryRunner.release();
-    }
+    //전체 요약 데이터 생성/갱신
+    await this.upsertTotalSummary(itemIdx, unitIdx, queryRunner, opts);
   }
 
   /**
@@ -108,28 +129,34 @@ export class InvestSummaryService {
    * @param unitIdx 단위 idx
    * @param targetDate 대상 요약 일자
    * @param queryRunner 트랜잭션 사용시
+   * @param opts
    */
   async upsertMonthSummary(
     itemIdx: number,
     unitIdx: number,
     targetDate: string,
-    queryRunner?: QueryRunner
+    queryRunner?: QueryRunner,
+    opts?: IUpsertSummaryOptions
   ): Promise<InvestSummaryDateEntity> {
     const entityManager = queryRunner ? queryRunner.manager : null;
 
     //상품 유무 체크
-    const hasItem = await this.investItemRepository.existsBy({item_idx: itemIdx}, queryRunner);
-    if (!hasItem) throw new DataNotFoundException('invest item');
+    if (!opts?.ignoreItemCheck) {
+      const hasItem = await this.investItemRepository.existsBy({item_idx: itemIdx}, queryRunner);
+      if (!hasItem) throw new DataNotFoundException('invest item');
+    }
 
     //단위 유무 체크
-    const hasUnit = await this.investUnitRepository.existsBy(
-      {
-        unit_idx: unitIdx,
-        item_idx: itemIdx,
-      },
-      queryRunner
-    );
-    if (!hasUnit) throw new DataNotFoundException('invest unit');
+    if (!opts?.ignoreUnitCheck) {
+      const hasUnit = await this.investUnitRepository.existsBy(
+        {
+          unit_idx: unitIdx,
+          item_idx: itemIdx,
+        },
+        queryRunner
+      );
+      if (!hasUnit) throw new DataNotFoundException('invest unit');
+    }
 
     //set vars: 날짜 관련
     const startDate = DateHelper.format(targetDate, 'YYYY-MM-01');
@@ -137,58 +164,13 @@ export class InvestSummaryService {
     const summaryDate = startDate;
 
     //set vars: 이번달 요약 데이터(없으면 생성)
-    let summaryDateEntity = entityManager
-      ? await entityManager.findOneBy<InvestSummaryDateEntity>(InvestSummaryDateEntity, {
-          summary_date: summaryDate,
-          item_idx: itemIdx,
-          summary_type: 'month',
-          unit_idx: unitIdx,
-        })
-      : await this.investSummaryDateRepository.findOneBy({
-          summary_date: summaryDate,
-          item_idx: itemIdx,
-          summary_type: 'month',
-          unit_idx: unitIdx,
-        });
-    if (!summaryDateEntity) {
-      summaryDateEntity = this.investSummaryDateRepository.newEntity(
-        itemIdx,
-        unitIdx,
-        summaryDate,
-        'month'
-      );
-    }
-
-    //set vars: 이전달 요약 데이터
-    const prevSummaryDateEntity = await this.investSummaryDateRepository.findPrevMonthData(
+    let summaryDateEntity = await this.investSummaryDateRepository.findEntityAndReset(
       itemIdx,
       unitIdx,
       summaryDate,
+      'month',
       queryRunner
     );
-
-    //이번달 요약 데이터에 이전달 요약 데이터 값 할당
-    let prevEarn = 0;
-    let prevEarnIncProceeds = 0;
-    let prevEarnRate = 0;
-    let prevEarnRateIncProceeds = 0;
-    if (prevSummaryDateEntity) {
-      prevEarn = prevSummaryDateEntity.earn;
-      prevEarnIncProceeds = prevSummaryDateEntity.earn_inc_proceeds;
-      prevEarnRate = prevSummaryDateEntity.earn_rate;
-      prevEarnRateIncProceeds = prevSummaryDateEntity.earn_rate_inc_proceeds;
-
-      summaryDateEntity.inout_principal_prev = prevSummaryDateEntity.inout_principal_total;
-      summaryDateEntity.inout_principal_total += prevSummaryDateEntity.inout_principal_total;
-
-      summaryDateEntity.inout_proceeds_prev = prevSummaryDateEntity.inout_proceeds_total;
-      summaryDateEntity.inout_proceeds_total += prevSummaryDateEntity.inout_proceeds_total;
-
-      summaryDateEntity.revenue_interest_prev = prevSummaryDateEntity.revenue_interest_total;
-      summaryDateEntity.revenue_interest_total += prevSummaryDateEntity.revenue_interest_total;
-
-      summaryDateEntity.revenue_eval_prev = prevSummaryDateEntity.revenue_eval;
-    }
 
     //set vars: 유입/유출/평가(이자) 요약 데이터
     const historySummary1 = await this.investHistoryRepository.findInoutInterestSummary(
@@ -225,13 +207,16 @@ export class InvestSummaryService {
     //생성할 요약 데이터에 가져온 데이터 저장
     if (historySummary2) summaryDateEntity.revenue_eval = historySummary2.val;
 
+    //set vars: 이전달 요약 데이터
+    const prevSummaryDateEntity = await this.investSummaryDateRepository.findPrevMonthData(
+      itemIdx,
+      unitIdx,
+      summaryDate,
+      queryRunner
+    );
+
     //재계산 필요 항목 재계산 처리
-    summaryDateEntity = this.recalculateDateSummary(summaryDateEntity, {
-      prevEarn: prevEarn,
-      prevEarnIncProceeds: prevEarnIncProceeds,
-      prevEarnRate: prevEarnRate,
-      prevEarnRateIncProceeds: prevEarnRateIncProceeds,
-    });
+    summaryDateEntity = this.recalculateDateSummary(summaryDateEntity, prevSummaryDateEntity);
 
     //이번달 요약 데이터 insert/update
     if (entityManager) {
@@ -249,29 +234,35 @@ export class InvestSummaryService {
    * @param unitIdx 단위 idx
    * @param targetDate 대상 요약 일자
    * @param queryRunner 트랜잭션 사용시
+   * @param opts
    */
   async updateNextMonthSummary(
     itemIdx: number,
     unitIdx: number,
     targetDate: string,
-    queryRunner?: QueryRunner
+    queryRunner?: QueryRunner,
+    opts?: IUpsertSummaryOptions
   ) {
     //상품 유무 체크
-    const hasItem = await this.investItemRepository.existsBy({item_idx: itemIdx}, queryRunner);
-    if (!hasItem) throw new DataNotFoundException('invest item');
+    if (!opts?.ignoreItemCheck) {
+      const hasItem = await this.investItemRepository.existsBy({item_idx: itemIdx}, queryRunner);
+      if (!hasItem) throw new DataNotFoundException('invest item');
+    }
 
     //단위 유무 체크
-    const hasUnit = await this.investUnitRepository.existsBy(
-      {
-        unit_idx: unitIdx,
-        item_idx: itemIdx,
-      },
-      queryRunner
-    );
-    if (!hasUnit) throw new DataNotFoundException('invest unit');
+    if (!opts?.ignoreUnitCheck) {
+      const hasUnit = await this.investUnitRepository.existsBy(
+        {
+          unit_idx: unitIdx,
+          item_idx: itemIdx,
+        },
+        queryRunner
+      );
+      if (!hasUnit) throw new DataNotFoundException('invest unit');
+    }
 
     //set vars: 날짜 관련
-    const summaryDate = DateHelper.format('YYYY-MM-01');
+    const summaryDate = DateHelper.format(targetDate, 'YYYY-MM-01');
 
     //set vars: 대상이 될 요약 데이터 기간 범위
     const dateRange = await this.investSummaryDateRepository.findMonthSummaryDateRange(
@@ -300,28 +291,34 @@ export class InvestSummaryService {
    * @param unitIdx 단위 idx
    * @param targetDate 대상 요약 일자
    * @param queryRunner 트랜잭션 사용시
+   * @param opts
    */
   async upsertYearSummary(
     itemIdx: number,
     unitIdx: number,
     targetDate: string,
-    queryRunner?: QueryRunner
+    queryRunner?: QueryRunner,
+    opts?: IUpsertSummaryOptions
   ): Promise<InvestSummaryDateEntity> {
     const entityManager = queryRunner ? queryRunner.manager : null;
 
     //상품 유무 체크
-    const hasItem = await this.investItemRepository.existsBy({item_idx: itemIdx}, queryRunner);
-    if (!hasItem) throw new DataNotFoundException('invest item');
+    if (!opts?.ignoreItemCheck) {
+      const hasItem = await this.investItemRepository.existsBy({item_idx: itemIdx}, queryRunner);
+      if (!hasItem) throw new DataNotFoundException('invest item');
+    }
 
     //단위 유무 체크
-    const hasUnit = await this.investUnitRepository.existsBy(
-      {
-        unit_idx: unitIdx,
-        item_idx: itemIdx,
-      },
-      queryRunner
-    );
-    if (!hasUnit) throw new DataNotFoundException('invest unit');
+    if (!opts?.ignoreUnitCheck) {
+      const hasUnit = await this.investUnitRepository.existsBy(
+        {
+          unit_idx: unitIdx,
+          item_idx: itemIdx,
+        },
+        queryRunner
+      );
+      if (!hasUnit) throw new DataNotFoundException('invest unit');
+    }
 
     //set vars: 날짜 관련
     const startDate = DateHelper.format(targetDate, 'YYYY-01-01');
@@ -329,58 +326,13 @@ export class InvestSummaryService {
     const summaryDate = startDate;
 
     //set vars: 이번년도 요약 데이터(없으면 생성)
-    let summaryDateEntity = entityManager
-      ? await entityManager.findOneBy<InvestSummaryDateEntity>(InvestSummaryDateEntity, {
-          summary_date: summaryDate,
-          item_idx: itemIdx,
-          summary_type: 'year',
-          unit_idx: unitIdx,
-        })
-      : await this.investSummaryDateRepository.findOneBy({
-          summary_date: summaryDate,
-          item_idx: itemIdx,
-          summary_type: 'year',
-          unit_idx: unitIdx,
-        });
-    if (!summaryDateEntity) {
-      summaryDateEntity = this.investSummaryDateRepository.newEntity(
-        itemIdx,
-        unitIdx,
-        summaryDate,
-        'year'
-      );
-    }
-
-    //set vars: 이전년도 요약 데이터
-    const prevSummaryDateEntity = await this.investSummaryDateRepository.findPrevYearData(
+    let summaryDateEntity = await this.investSummaryDateRepository.findEntityAndReset(
       itemIdx,
       unitIdx,
       summaryDate,
+      'year',
       queryRunner
     );
-
-    //이번년도 요약 데이터에 이전년도 요약 데이터 값 할당
-    let prevEarn = 0;
-    let prevEarnIncProceeds = 0;
-    let prevEarnRate = 0;
-    let prevEarnRateIncProceeds = 0;
-    if (prevSummaryDateEntity) {
-      prevEarn = prevSummaryDateEntity.earn;
-      prevEarnIncProceeds = prevSummaryDateEntity.earn_inc_proceeds;
-      prevEarnRate = prevSummaryDateEntity.earn_rate;
-      prevEarnRateIncProceeds = prevSummaryDateEntity.earn_rate_inc_proceeds;
-
-      summaryDateEntity.inout_principal_prev = prevSummaryDateEntity.inout_principal_total;
-      summaryDateEntity.inout_principal_total += prevSummaryDateEntity.inout_principal_total;
-
-      summaryDateEntity.inout_proceeds_prev = prevSummaryDateEntity.inout_proceeds_total;
-      summaryDateEntity.inout_proceeds_total += prevSummaryDateEntity.inout_proceeds_total;
-
-      summaryDateEntity.revenue_interest_prev = prevSummaryDateEntity.revenue_interest_total;
-      summaryDateEntity.revenue_interest_total += prevSummaryDateEntity.revenue_interest_total;
-
-      summaryDateEntity.revenue_eval_prev = prevSummaryDateEntity.revenue_eval;
-    }
 
     //set vars: 유입/유출/평가(이자) 요약 데이터
     const historySummary1 = await this.investSummaryDateRepository.findInoutInterestSummary(
@@ -413,13 +365,16 @@ export class InvestSummaryService {
     //생성할 요약 데이터에 가져온 데이터 저장
     if (historySummary2) summaryDateEntity.revenue_eval = historySummary2.val;
 
+    //set vars: 이전년도 요약 데이터
+    const prevSummaryDateEntity = await this.investSummaryDateRepository.findPrevYearData(
+      itemIdx,
+      unitIdx,
+      summaryDate,
+      queryRunner
+    );
+
     //재계산 필요 항목 재계산 처리
-    summaryDateEntity = this.recalculateDateSummary(summaryDateEntity, {
-      prevEarn: prevEarn,
-      prevEarnIncProceeds: prevEarnIncProceeds,
-      prevEarnRate: prevEarnRate,
-      prevEarnRateIncProceeds: prevEarnRateIncProceeds,
-    });
+    summaryDateEntity = this.recalculateDateSummary(summaryDateEntity, prevSummaryDateEntity);
 
     //이번달 요약 데이터 insert/update
     if (entityManager) {
@@ -437,29 +392,35 @@ export class InvestSummaryService {
    * @param unitIdx 단위 idx
    * @param targetDate 대상 요약 일자
    * @param queryRunner 트랜잭션 사용시
+   * @param opts
    */
   async updateNextYearSummary(
     itemIdx: number,
     unitIdx: number,
     targetDate: string,
-    queryRunner?: QueryRunner
+    queryRunner?: QueryRunner,
+    opts?: IUpsertSummaryOptions
   ) {
     //상품 유무 체크
-    const hasItem = await this.investItemRepository.existsBy({item_idx: itemIdx}, queryRunner);
-    if (!hasItem) throw new DataNotFoundException('invest item');
+    if (!opts?.ignoreItemCheck) {
+      const hasItem = await this.investItemRepository.existsBy({item_idx: itemIdx}, queryRunner);
+      if (!hasItem) throw new DataNotFoundException('invest item');
+    }
 
     //단위 유무 체크
-    const hasUnit = await this.investUnitRepository.existsBy(
-      {
-        unit_idx: unitIdx,
-        item_idx: itemIdx,
-      },
-      queryRunner
-    );
-    if (!hasUnit) throw new DataNotFoundException('invest unit');
+    if (!opts?.ignoreUnitCheck) {
+      const hasUnit = await this.investUnitRepository.existsBy(
+        {
+          unit_idx: unitIdx,
+          item_idx: itemIdx,
+        },
+        queryRunner
+      );
+      if (!hasUnit) throw new DataNotFoundException('invest unit');
+    }
 
     //set vars: 날짜 관련
-    const summaryDate = DateHelper.format('YYYY-01-01');
+    const summaryDate = DateHelper.format(targetDate, 'YYYY-01-01');
 
     //set vars: 대상이 년간 요약 데이터 기간 범위
     const dateRange = await this.investSummaryDateRepository.findYearSummaryDateRange(
@@ -480,40 +441,40 @@ export class InvestSummaryService {
    * @param itemIdx 상품 idx
    * @param unitIdx 단위 idx
    * @param queryRunner 트랜잭션 사용시
+   * @param opts
    */
   async upsertTotalSummary(
     itemIdx: number,
     unitIdx: number,
-    queryRunner?: QueryRunner
+    queryRunner?: QueryRunner,
+    opts?: IUpsertSummaryOptions
   ): Promise<InvestSummaryEntity> {
     const entityManager = queryRunner ? queryRunner.manager : null;
 
     //상품 유무 체크
-    const hasItem = await this.investItemRepository.existsBy({item_idx: itemIdx}, queryRunner);
-    if (!hasItem) throw new DataNotFoundException('invest item');
+    if (!opts?.ignoreItemCheck) {
+      const hasItem = await this.investItemRepository.existsBy({item_idx: itemIdx}, queryRunner);
+      if (!hasItem) throw new DataNotFoundException('invest item');
+    }
 
     //단위 유무 체크
-    const hasUnit = await this.investUnitRepository.existsBy(
-      {
-        unit_idx: unitIdx,
-        item_idx: itemIdx,
-      },
-      queryRunner
-    );
-    if (!hasUnit) throw new DataNotFoundException('invest unit');
+    if (!opts?.ignoreUnitCheck) {
+      const hasUnit = await this.investUnitRepository.existsBy(
+        {
+          unit_idx: unitIdx,
+          item_idx: itemIdx,
+        },
+        queryRunner
+      );
+      if (!hasUnit) throw new DataNotFoundException('invest unit');
+    }
 
     //set vars:  전체 요약 데이터(없으면 생성)
-    let summaryEntity = entityManager
-      ? await entityManager.findOneBy<InvestSummaryEntity>(InvestSummaryEntity, {
-          item_idx: itemIdx,
-          unit_idx: unitIdx,
-        })
-      : await this.investSummaryRepository.findByCondition({item_idx: itemIdx, unit_idx: unitIdx});
-    if (!summaryEntity) {
-      summaryEntity = new InvestSummaryEntity();
-      summaryEntity.item_idx = itemIdx;
-      summaryEntity.unit_idx = unitIdx;
-    }
+    let summaryEntity = await this.investSummaryRepository.findEntityAndReset(
+      itemIdx,
+      unitIdx,
+      queryRunner
+    );
 
     //set vars: 년간 요약 데이터
     const summaryDateEntity = entityManager

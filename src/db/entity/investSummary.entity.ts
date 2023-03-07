@@ -1,13 +1,17 @@
 import {
   BaseEntity,
+  BeforeUpdate,
   Column,
+  CreateDateColumn,
   Entity,
   Index,
   JoinColumn,
   ManyToOne,
   PrimaryGeneratedColumn,
+  UpdateDateColumn,
 } from 'typeorm';
 
+import {DateHelper} from '@common/helper';
 import {InvestItemEntity, InvestUnitEntity} from '@db/entity';
 import {DateTransformer} from '@db/transformer';
 
@@ -28,13 +32,6 @@ export class InvestSummaryEntity extends BaseEntity {
     nullable: false,
   })
   unit_idx: number;
-
-  @Column({
-    type: 'varchar',
-    length: 10,
-    nullable: false,
-  })
-  item_type: string;
 
   @Column({
     type: 'double',
@@ -116,7 +113,7 @@ export class InvestSummaryEntity extends BaseEntity {
   })
   earn_rate_inc_proceeds: number;
 
-  @Column({
+  @CreateDateColumn({
     type: 'timestamp',
     nullable: false,
     default: () => 'CURRENT_TIMESTAMP',
@@ -124,7 +121,7 @@ export class InvestSummaryEntity extends BaseEntity {
   })
   created_at: string;
 
-  @Column({
+  @UpdateDateColumn({
     type: 'timestamp',
     nullable: true,
     default: null,
@@ -132,6 +129,14 @@ export class InvestSummaryEntity extends BaseEntity {
     transformer: new DateTransformer(),
   })
   updated_at: string;
+
+  /**
+   * hooks
+   */
+  @BeforeUpdate()
+  private setUpdatedAt() {
+    this.updated_at = DateHelper.format();
+  }
 
   /**
    * relations

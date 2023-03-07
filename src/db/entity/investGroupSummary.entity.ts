@@ -1,5 +1,17 @@
-import {BaseEntity, Column, Entity, Index, JoinColumn, ManyToOne, PrimaryColumn} from 'typeorm';
+import {
+  BaseEntity,
+  BeforeUpdate,
+  Column,
+  CreateDateColumn,
+  Entity,
+  Index,
+  JoinColumn,
+  ManyToOne,
+  PrimaryColumn,
+  UpdateDateColumn,
+} from 'typeorm';
 
+import {DateHelper} from '@common/helper';
 import {InvestGroupEntity} from '@db/entity';
 import {DateTransformer} from '@db/transformer';
 
@@ -92,7 +104,7 @@ export class InvestGroupSummaryEntity extends BaseEntity {
   })
   earn_rate_inc_proceeds: number;
 
-  @Column({
+  @CreateDateColumn({
     type: 'timestamp',
     nullable: false,
     default: () => 'CURRENT_TIMESTAMP',
@@ -100,7 +112,7 @@ export class InvestGroupSummaryEntity extends BaseEntity {
   })
   created_at: string;
 
-  @Column({
+  @UpdateDateColumn({
     type: 'timestamp',
     nullable: true,
     default: null,
@@ -108,6 +120,14 @@ export class InvestGroupSummaryEntity extends BaseEntity {
     transformer: new DateTransformer(),
   })
   updated_at: string;
+
+  /**
+   * hooks
+   */
+  @BeforeUpdate()
+  private setUpdatedAt() {
+    this.updated_at = DateHelper.format();
+  }
 
   /**
    * relations

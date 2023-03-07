@@ -1,13 +1,17 @@
 import {
   BaseEntity,
+  BeforeUpdate,
   Column,
+  CreateDateColumn,
   Entity,
   Index,
   JoinColumn,
   ManyToOne,
   PrimaryGeneratedColumn,
+  UpdateDateColumn,
 } from 'typeorm';
 
+import {DateHelper} from '@common/helper';
 import {EInvestSummaryDateType} from '@db/db.enum';
 import {InvestItemEntity, InvestUnitEntity} from '@db/entity';
 import {DateTransformer} from '@db/transformer';
@@ -220,7 +224,7 @@ export class InvestSummaryDateEntity extends BaseEntity {
   })
   earn_rate_inc_proceeds_prev_diff: number;
 
-  @Column({
+  @CreateDateColumn({
     type: 'timestamp',
     nullable: false,
     default: () => 'CURRENT_TIMESTAMP',
@@ -228,7 +232,7 @@ export class InvestSummaryDateEntity extends BaseEntity {
   })
   created_at: string;
 
-  @Column({
+  @UpdateDateColumn({
     type: 'timestamp',
     nullable: true,
     default: null,
@@ -236,6 +240,14 @@ export class InvestSummaryDateEntity extends BaseEntity {
     transformer: new DateTransformer(),
   })
   updated_at: string;
+
+  /**
+   * hooks
+   */
+  @BeforeUpdate()
+  private setUpdatedAt() {
+    this.updated_at = DateHelper.format();
+  }
 
   /**
    * relations

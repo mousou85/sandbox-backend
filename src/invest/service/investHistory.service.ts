@@ -2,6 +2,7 @@ import {Injectable} from '@nestjs/common';
 import {DataSource} from 'typeorm';
 
 import {CreateInvestHistoryDto} from '@app/invest/dto';
+import {InvestSummaryService} from '@app/invest/service/investSummary.service';
 import {DataNotFoundException} from '@common/exception';
 import {IFindAllResult, IQueryListOption} from '@db/db.interface';
 import {InvestHistoryEntity} from '@db/entity';
@@ -9,6 +10,7 @@ import {
   IInvestHistoryCondition,
   IInvestHistoryJoinOption,
   InvestHistoryRepository,
+  InvestItemRepository,
   InvestUnitRepository,
 } from '@db/repository';
 
@@ -17,7 +19,9 @@ export class InvestHistoryService {
   constructor(
     protected dataSource: DataSource,
     protected investHistoryRepository: InvestHistoryRepository,
-    protected investUnitRepository: InvestUnitRepository
+    protected investItemRepository: InvestItemRepository,
+    protected investUnitRepository: InvestUnitRepository,
+    protected investSummaryService: InvestSummaryService
   ) {}
 
   /**
@@ -80,28 +84,57 @@ export class InvestHistoryService {
     itemIdx: number,
     createDto: CreateInvestHistoryDto
   ): Promise<InvestHistoryEntity> {
-    //단위 유무 확인
-    const hasUnit = await this.investUnitRepository.existsBy({
-      unit_idx: createDto.unitIdx,
-      item_idx: itemIdx,
-    });
-    if (!hasUnit) throw new DataNotFoundException('invest unit');
+    //트랜잭션 처리
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+    try {
+      const entityManager = queryRunner.manager;
 
-    //set vars: create dto props
-    const {unitIdx, historyDate, historyType, inoutType, revenueType, val, memo} = createDto;
+      //상품 유무 체크
+      const hasItem = await this.investItemRepository.existsBy({item_idx: itemIdx}, queryRunner);
+      if (!hasItem) throw new DataNotFoundException('invest item');
 
-    //히스토리 insert
-    const historyEntity = this.investHistoryRepository.create();
-    historyEntity.item_idx = itemIdx;
-    historyEntity.unit_idx = unitIdx;
-    historyEntity.history_date = historyDate;
-    historyEntity.history_type = historyType;
-    if (historyType == 'inout' && inoutType) historyEntity.inout_type = inoutType;
-    if (historyType == 'revenue' && revenueType) historyEntity.revenue_type = revenueType;
-    historyEntity.val = val;
-    if (memo) historyEntity.memo = memo;
-    await this.investHistoryRepository.save(historyEntity);
+      //단위 유무 확인
+      const hasUnit = await this.investUnitRepository.existsBy(
+        {
+          unit_idx: createDto.unitIdx,
+          item_idx: itemIdx,
+        },
+        queryRunner
+      );
+      if (!hasUnit) throw new DataNotFoundException('invest unit');
 
-    return historyEntity;
+      //set vars: create dto props
+      const {unitIdx, historyDate, historyType, inoutType, revenueType, val, memo} = createDto;
+
+      //히스토리 insert
+      const historyEntity = new InvestHistoryEntity();
+      historyEntity.item_idx = itemIdx;
+      historyEntity.unit_idx = unitIdx;
+      historyEntity.history_date = historyDate;
+      historyEntity.history_type = historyType;
+      if (historyType == 'inout' && inoutType) historyEntity.inout_type = inoutType;
+      if (historyType == 'revenue' && revenueType) historyEntity.revenue_type = revenueType;
+      historyEntity.val = val;
+      if (memo) historyEntity.memo = memo;
+
+      await entityManager.save(historyEntity);
+
+      //요약 데이터 생성/갱신
+      await this.investSummaryService.upsertSummary(itemIdx, unitIdx, historyDate, queryRunner, {
+        ignoreUnitCheck: true,
+        ignoreItemCheck: true,
+      });
+
+      await queryRunner.commitTransaction();
+
+      return historyEntity;
+    } catch (err) {
+      await queryRunner.rollbackTransaction();
+      throw err;
+    } finally {
+      await queryRunner.release();
+    }
   }
 }

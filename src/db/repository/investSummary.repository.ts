@@ -84,4 +84,50 @@ export class InvestSummaryRepository extends BaseRepository<InvestSummaryEntity>
   ): Promise<IFindAllResult<InvestSummaryEntity>> {
     return super.findAllByCondition(condition, listOption, joinOption, queryRunner);
   }
+
+  /**
+   * entity를 초기화해서 반환
+   * @param itemIdx
+   * @param unitIdx
+   * @param queryRunner
+   */
+  async findEntityAndReset(
+    itemIdx: number,
+    unitIdx: number,
+    queryRunner?: QueryRunner
+  ): Promise<InvestSummaryEntity> {
+    let entity;
+    if (queryRunner) {
+      entity = await queryRunner.manager.findOneBy<InvestSummaryEntity>(InvestSummaryEntity, {
+        item_idx: itemIdx,
+        unit_idx: unitIdx,
+      });
+    } else {
+      entity = await this.findOneBy({
+        item_idx: itemIdx,
+        unit_idx: unitIdx,
+      });
+    }
+
+    if (!entity) {
+      entity = new InvestSummaryEntity();
+      entity.item_idx = itemIdx;
+      entity.unit_idx = unitIdx;
+    }
+
+    entity.inout_total = 0;
+    entity.inout_principal = 0;
+    entity.inout_proceeds = 0;
+
+    entity.revenue_total = 0;
+    entity.revenue_interest = 0;
+    entity.revenue_eval = 0;
+
+    entity.earn = 0;
+    entity.earn_rate = 0;
+    entity.earn_inc_proceeds = 0;
+    entity.earn_rate_inc_proceeds = 0;
+
+    return entity;
+  }
 }
