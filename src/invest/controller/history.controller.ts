@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   HttpCode,
   Inject,
@@ -8,6 +9,7 @@ import {
   LoggerService,
   Param,
   ParseIntPipe,
+  Patch,
   Post,
   Query,
   UseGuards,
@@ -21,9 +23,10 @@ import {
   CreateInvestHistoryDto,
   InvestHistoryDto,
   InvestHistoryDtoSimple,
+  UpdateInvestHistoryDto,
   UrlQueryInvestHistoryListDto,
 } from '@app/invest/dto';
-import {InvestHistoryService, InvestItemService, InvestSummaryService} from '@app/invest/service';
+import {InvestHistoryService, InvestItemService} from '@app/invest/service';
 import {ApiConsumesCustom, ApiListResponse, ApiOkResponseCustom} from '@common/decorator/swagger';
 import {ListResponseDto, OkResponseDto} from '@common/dto';
 import {DataNotFoundException} from '@common/exception';
@@ -39,8 +42,7 @@ export class HistoryController {
   constructor(
     @Inject(Logger) private logger: LoggerService,
     private investHistoryService: InvestHistoryService,
-    private investItemService: InvestItemService,
-    private investSummaryService: InvestSummaryService
+    private investItemService: InvestItemService
   ) {}
 
   @ApiOperation({summary: '히스토리 리스트 조회'})
@@ -125,7 +127,7 @@ export class HistoryController {
     @User() user: AuthUserDto,
     @Param('itemIdx', new RequiredPipe(), new ParseIntPipe()) itemIdx: number,
     @Body() createDto: CreateInvestHistoryDto
-  ) {
+  ): Promise<OkResponseDto<InvestHistoryDtoSimple>> {
     //상품 유무 확인
     const hasItem = await this.investItemService.hasItem({
       item_idx: itemIdx,
@@ -140,5 +142,52 @@ export class HistoryController {
     const historyDto = new InvestHistoryDtoSimple(historyEntity);
 
     return new OkResponseDto(historyDto);
+  }
+
+  @ApiOperation({summary: '히스토리 수정'})
+  @ApiConsumesCustom()
+  @ApiParam({name: 'historyIdx', required: true, description: '히스토리 IDX', type: 'number'})
+  @ApiOkResponseCustom({model: InvestHistoryDtoSimple})
+  @Patch('/:historyIdx(\\d+)')
+  async updateHistory(
+    @User() user: AuthUserDto,
+    @Param('historyIdx', new RequiredPipe(), new ParseIntPipe()) historyIdx: number,
+    @Body() updateDto: UpdateInvestHistoryDto
+  ): Promise<OkResponseDto<InvestHistoryDtoSimple>> {
+    //히스토리 유무 확인
+    const hasHistory = await this.investHistoryService.hasHistory({
+      history_idx: historyIdx,
+      user_idx: user.userIdx,
+    });
+    if (!hasHistory) throw new DataNotFoundException('invest history');
+
+    //히스토리 수정
+    const historyEntity = await this.investHistoryService.updateHistory(historyIdx, updateDto);
+
+    //set vars: dto
+    const historyDto = new InvestHistoryDtoSimple(historyEntity);
+
+    return new OkResponseDto(historyDto);
+  }
+
+  @ApiOperation({summary: '히스토리 삭제'})
+  @ApiParam({name: 'historyIdx', required: true, description: '히스토리 IDX', type: 'number'})
+  @ApiOkResponseCustom({model: null})
+  @Delete('/:historyIdx(\\d+)')
+  async deleteHistory(
+    @User() user: AuthUserDto,
+    @Param('historyIdx', new RequiredPipe(), new ParseIntPipe()) historyIdx: number
+  ): Promise<OkResponseDto<void>> {
+    //히스토리 유무 확인
+    const hasHistory = await this.investHistoryService.hasHistory({
+      history_idx: historyIdx,
+      user_idx: user.userIdx,
+    });
+    if (!hasHistory) throw new DataNotFoundException('invest history');
+
+    //히스토리 삭제
+    await this.investHistoryService.deleteHistory(historyIdx);
+
+    return new OkResponseDto();
   }
 }

@@ -1,5 +1,5 @@
 import {ApiExtraModels, ApiProperty, PickType} from '@nestjs/swagger';
-import {Expose, Transform} from 'class-transformer';
+import {Expose, Transform, Type} from 'class-transformer';
 import {IsNotEmpty, MaxLength, ValidateNested} from 'class-validator';
 
 import {InvestItemDto} from '@app/invest/dto';
@@ -55,6 +55,7 @@ export class InvestGroupDto extends InvestGroupDtoSimple {
   })
   @Expose()
   @ValidateNested({each: true})
+  @Type(() => InvestItemDto)
   itemList: InvestItemDto[] = [];
 
   @ApiProperty({description: '소속된 상품 갯수', required: true})

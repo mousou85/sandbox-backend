@@ -4,6 +4,7 @@ import {DataSource, QueryRunner} from 'typeorm';
 
 import {DataNotFoundException} from '@common/exception';
 import {DateHelper} from '@common/helper';
+import {EInvestSummaryDateType} from '@db/db.enum';
 import {InvestSummaryDateEntity, InvestSummaryEntity} from '@db/entity';
 import {
   InvestHistoryRepository,
@@ -31,6 +32,42 @@ export class InvestSummaryService {
     protected investUnitRepository: InvestUnitRepository,
     protected investHistoryRepository: InvestHistoryRepository
   ) {}
+
+  /**
+   * 전체 요약 데이터 반환
+   * @param itemIdx
+   * @param unit
+   */
+  async getTotalSummary(itemIdx: number, unit: string): Promise<InvestSummaryEntity> {
+    return this.investSummaryRepository.findByCondition(
+      {item_idx: itemIdx, unit: unit},
+      {investUnit: true}
+    );
+  }
+
+  /**
+   * 월간/년간 요약 데이터 반환
+   * @param itemIdx
+   * @param unit
+   * @param summaryDateType
+   * @param summaryDate
+   */
+  async getDateSummary(
+    itemIdx: number,
+    unit: string,
+    summaryDateType: EInvestSummaryDateType,
+    summaryDate: string
+  ): Promise<InvestSummaryDateEntity> {
+    return this.investSummaryDateRepository.findByCondition(
+      {
+        item_idx: itemIdx,
+        unit: unit,
+        summary_type: summaryDateType,
+        summary_date: {value: summaryDate, op: '='},
+      },
+      {investUnit: true}
+    );
+  }
 
   /**
    * 년간/월간 요약 데이터의 항목중 재계산 필요한 항목 재계산
@@ -137,7 +174,7 @@ export class InvestSummaryService {
     targetDate: string,
     queryRunner?: QueryRunner,
     opts?: IUpsertSummaryOptions
-  ): Promise<InvestSummaryDateEntity> {
+  ): Promise<void> {
     const entityManager = queryRunner ? queryRunner.manager : null;
 
     //상품 유무 체크
@@ -220,12 +257,10 @@ export class InvestSummaryService {
 
     //이번달 요약 데이터 insert/update
     if (entityManager) {
-      await entityManager.save(summaryDateEntity);
+      await entityManager.save(summaryDateEntity, {reload: false});
     } else {
-      await this.investSummaryDateRepository.save(summaryDateEntity);
+      await this.investSummaryDateRepository.save(summaryDateEntity, {reload: false});
     }
-
-    return summaryDateEntity;
   }
 
   /**
@@ -242,7 +277,7 @@ export class InvestSummaryService {
     targetDate: string,
     queryRunner?: QueryRunner,
     opts?: IUpsertSummaryOptions
-  ) {
+  ): Promise<void> {
     //상품 유무 체크
     if (!opts?.ignoreItemCheck) {
       const hasItem = await this.investItemRepository.existsBy({item_idx: itemIdx}, queryRunner);
@@ -299,7 +334,7 @@ export class InvestSummaryService {
     targetDate: string,
     queryRunner?: QueryRunner,
     opts?: IUpsertSummaryOptions
-  ): Promise<InvestSummaryDateEntity> {
+  ): Promise<void> {
     const entityManager = queryRunner ? queryRunner.manager : null;
 
     //상품 유무 체크
@@ -378,12 +413,10 @@ export class InvestSummaryService {
 
     //이번달 요약 데이터 insert/update
     if (entityManager) {
-      await entityManager.save(summaryDateEntity);
+      await entityManager.save(summaryDateEntity, {reload: false});
     } else {
-      await this.investSummaryDateRepository.save(summaryDateEntity);
+      await this.investSummaryDateRepository.save(summaryDateEntity, {reload: false});
     }
-
-    return summaryDateEntity;
   }
 
   /**
@@ -400,7 +433,7 @@ export class InvestSummaryService {
     targetDate: string,
     queryRunner?: QueryRunner,
     opts?: IUpsertSummaryOptions
-  ) {
+  ): Promise<void> {
     //상품 유무 체크
     if (!opts?.ignoreItemCheck) {
       const hasItem = await this.investItemRepository.existsBy({item_idx: itemIdx}, queryRunner);
@@ -448,7 +481,7 @@ export class InvestSummaryService {
     unitIdx: number,
     queryRunner?: QueryRunner,
     opts?: IUpsertSummaryOptions
-  ): Promise<InvestSummaryEntity> {
+  ): Promise<void> {
     const entityManager = queryRunner ? queryRunner.manager : null;
 
     //상품 유무 체크
@@ -517,11 +550,9 @@ export class InvestSummaryService {
 
     //전체 요약 데이터 insert/update
     if (entityManager) {
-      await entityManager.save(summaryEntity);
+      await entityManager.save(summaryEntity, {reload: false});
     } else {
-      await this.investSummaryRepository.save(summaryEntity);
+      await this.investSummaryRepository.save(summaryEntity, {reload: false});
     }
-
-    return summaryEntity;
   }
 }

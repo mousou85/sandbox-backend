@@ -79,4 +79,14 @@ export class CommonHelper {
     }
     return ip;
   }
+
+  /**
+   * 실수 변환
+   * @param value
+   * @param precision
+   */
+  static parseFloat(value: string | number, precision?: number): number {
+    if (typeof value == 'string') value = parseFloat(value);
+    return precision > 0 ? parseFloat(value.toFixed(precision)) : value;
+  }
 }

@@ -1,6 +1,14 @@
-import dayjs, {OpUnitType} from 'dayjs';
+import dayjs, {OpUnitType, QUnitType} from 'dayjs';
 
 export class DateHelper {
+  /**
+   * 현재 날짜/시간 반환
+   * @param [format=YYYY-MM-DD　HH:mm:ss] 포맷
+   */
+  static now(format: string = 'YYYY-MM-DD HH:mm:ss'): string {
+    return this.format(null, format);
+  }
+
   /**
    * 날짜 포맷 변환
    * @param [date=now] 날짜(default: 현재시간)
@@ -48,5 +56,25 @@ export class DateHelper {
     return dayjs(date ?? undefined)
       .endOf(unit)
       .format(format);
+  }
+
+  /**
+   * 두 날짜를 비교
+   * - criteriaDate가 targetDate보다 이전/이후인지 비교
+   * (= criteriaDate - targetDate)
+   * @param criteriaDate 기준 일자
+   * @param targetDate 대상 일자
+   * @param [unit=milliseconds] 단위
+   * @return criteriaDate가 targetDate보다 이전이면 음수반환, 이후이면 양수반환
+   */
+  static diff(
+    criteriaDate: string | number | Date | dayjs.Dayjs,
+    targetDate: string | number | Date | dayjs.Dayjs,
+    unit: QUnitType = 'milliseconds'
+  ): number {
+    criteriaDate = dayjs(criteriaDate);
+    targetDate = dayjs(targetDate);
+
+    return criteriaDate.diff(targetDate, unit);
   }
 }

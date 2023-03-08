@@ -1,5 +1,5 @@
 import {ApiExtraModels, ApiProperty, PartialType, PickType} from '@nestjs/swagger';
-import {Expose, Transform} from 'class-transformer';
+import {Expose, Transform, Type} from 'class-transformer';
 import {IsNotEmpty, IsOptional, MaxLength, ValidateNested} from 'class-validator';
 
 import {InvestUnitDto} from '@app/invest/dto';
@@ -88,6 +88,7 @@ export class InvestItemDto extends InvestItemDtoSimple {
   })
   @Expose()
   @ValidateNested({each: true})
+  @Type(() => InvestUnitDto)
   unitList: InvestUnitDto[] = [];
 
   @ApiProperty({description: '사용가능한 단위 갯수', required: true})

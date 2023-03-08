@@ -1,9 +1,11 @@
 import {Injectable} from '@nestjs/common';
+import {isDefined, isNotEmpty} from 'class-validator';
 import {DataSource} from 'typeorm';
 
-import {CreateInvestHistoryDto} from '@app/invest/dto';
+import {CreateInvestHistoryDto, UpdateInvestHistoryDto} from '@app/invest/dto';
 import {InvestSummaryService} from '@app/invest/service/investSummary.service';
 import {DataNotFoundException} from '@common/exception';
+import {DateHelper} from '@common/helper';
 import {IFindAllResult, IQueryListOption} from '@db/db.interface';
 import {InvestHistoryEntity} from '@db/entity';
 import {
@@ -120,6 +122,122 @@ export class InvestHistoryService {
       if (memo) historyEntity.memo = memo;
 
       await entityManager.save(historyEntity);
+
+      //요약 데이터 생성/갱신
+      await this.investSummaryService.upsertSummary(itemIdx, unitIdx, historyDate, queryRunner, {
+        ignoreUnitCheck: true,
+        ignoreItemCheck: true,
+      });
+
+      await queryRunner.commitTransaction();
+
+      return historyEntity;
+    } catch (err) {
+      await queryRunner.rollbackTransaction();
+      throw err;
+    } finally {
+      await queryRunner.release();
+    }
+  }
+
+  /**
+   * 히스토리 수정
+   * @param historyIdx
+   * @param updateDto
+   */
+  async updateHistory(
+    historyIdx: number,
+    updateDto: UpdateInvestHistoryDto
+  ): Promise<InvestHistoryEntity> {
+    //트랜잭션 처리
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+    try {
+      const entityManager = queryRunner.manager;
+
+      //set vars: 히스토리 데이터
+      const historyEntity = await entityManager.findOneBy(InvestHistoryEntity, {
+        history_idx: historyIdx,
+      });
+      if (!historyEntity) throw new DataNotFoundException('invest history');
+
+      //set vars: create dto props
+      const {historyDate, val, memo} = updateDto;
+
+      //히스토리 update
+      let prevHistoryDate;
+      if (historyDate) {
+        prevHistoryDate = historyEntity.history_date;
+        historyEntity.history_date = historyDate;
+      }
+      if (isDefined(val)) {
+        historyEntity.val = val;
+      }
+      if (isDefined(memo)) {
+        historyEntity.memo = isNotEmpty(memo) ? memo : null;
+      }
+
+      await entityManager.save(historyEntity);
+
+      //요약 데이터 생성/갱신
+      if (historyDate || isDefined(val)) {
+        let summaryTargetDate;
+        if (prevHistoryDate && historyDate) {
+          summaryTargetDate =
+            DateHelper.diff(prevHistoryDate, historyDate) < 0 ? prevHistoryDate : historyDate;
+        } else {
+          summaryTargetDate = historyEntity.history_date;
+        }
+
+        await this.investSummaryService.upsertSummary(
+          historyEntity.item_idx,
+          historyEntity.unit_idx,
+          summaryTargetDate,
+          queryRunner,
+          {
+            ignoreUnitCheck: true,
+            ignoreItemCheck: true,
+          }
+        );
+      }
+
+      await queryRunner.commitTransaction();
+
+      return historyEntity;
+    } catch (err) {
+      await queryRunner.rollbackTransaction();
+      throw err;
+    } finally {
+      await queryRunner.release();
+    }
+  }
+
+  /**
+   * 히스토리 삭제
+   * @param historyIdx
+   */
+  async deleteHistory(historyIdx: number) {
+    //트랜잭션 처리
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+    try {
+      const entityManager = queryRunner.manager;
+
+      //set vars: 히스토리 데이터
+      const historyEntity = await entityManager.findOneBy(InvestHistoryEntity, {
+        history_idx: historyIdx,
+      });
+      if (!historyEntity) throw new DataNotFoundException('invest history');
+
+      //set vars: 히스토리 정보
+      const itemIdx = historyEntity.item_idx;
+      const unitIdx = historyEntity.unit_idx;
+      const historyDate = historyEntity.history_date;
+
+      //히스토리 delete
+      await entityManager.remove(historyEntity);
 
       //요약 데이터 생성/갱신
       await this.investSummaryService.upsertSummary(itemIdx, unitIdx, historyDate, queryRunner, {

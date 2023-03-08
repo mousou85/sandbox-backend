@@ -1,4 +1,4 @@
-import {ApiProperty, PickType} from '@nestjs/swagger';
+import {ApiProperty, PartialType, PickType} from '@nestjs/swagger';
 import {Expose, Transform} from 'class-transformer';
 import {IsNotEmpty, IsNumberString, IsOptional, ValidateIf} from 'class-validator';
 
@@ -127,7 +127,7 @@ export class InvestHistoryDtoSimple extends DefaultDto {
   @Expose()
   @IsOptional()
   @Transform(({value}) => DtoTransform.trim(value))
-  memo?: string;
+  memo: string = null;
 
   @ApiProperty({description: '생성 시간', required: true})
   @Expose()
@@ -222,3 +222,10 @@ export class CreateInvestHistoryDto extends PickType(InvestHistoryDtoSimple, [
   'val',
   'memo',
 ] as const) {}
+
+/**
+ * 히스토리 수정 DTO
+ */
+export class UpdateInvestHistoryDto extends PartialType(
+  PickType(InvestHistoryDtoSimple, ['historyDate', 'val', 'memo'] as const)
+) {}
