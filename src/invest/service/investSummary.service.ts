@@ -555,4 +555,90 @@ export class InvestSummaryService {
       await this.investSummaryRepository.save(summaryEntity, {reload: false});
     }
   }
+
+  /**
+   * 요약 데이터 재생성
+   * @param itemIdx
+   */
+  async remakeSummary(itemIdx: number) {
+    //상품 유무 체크
+    const hasItem = await this.investItemRepository.existsBy({item_idx: itemIdx});
+    if (!hasItem) throw new DataNotFoundException('invest item');
+
+    //set vars: 단위 리스트
+    const {list: unitList} = await this.investUnitRepository.findAllByCondition(
+      {item_idx: itemIdx},
+      {getAll: true}
+    );
+
+    //단위 별로 처리
+    for (const unit of unitList) {
+      const unitIdx = unit.unit_idx;
+
+      //set vars: 요약 데이터 만들 기간 범위
+      const dateRange = await this.investHistoryRepository
+        .createQueryBuilder('history')
+        .select([
+          `DATE_FORMAT(MIN(history.history_date), '%Y-%m-01') AS minDate`,
+          `DATE_FORMAT(MAX(history.history_date), '%Y-%m-01') AS maxDate`,
+        ])
+        .where('history.item_idx = :item_idx', {item_idx: itemIdx})
+        .andWhere('history.unit_idx = :unit_idx', {unit_idx: unitIdx})
+        .getRawOne();
+      if (!dateRange || !dateRange.minDate || !dateRange.maxDate) continue;
+
+      //set vars: 날짜 관련
+      const minDate = dayjs(dateRange.minDate);
+      const maxDate = dayjs(dateRange.maxDate);
+      let targetDate = minDate.clone();
+      let lastYear = minDate.year();
+      const targetYear = [minDate.year()];
+
+      //트랜잭션 처리
+      const queryRunner = this.dataSource.createQueryRunner();
+      await queryRunner.connect();
+      await queryRunner.startTransaction();
+      try {
+        //기간 범위를 1달 단위로 반복하여 처리
+        while (targetDate <= maxDate) {
+          //월간 요약 데이터 insert/update
+          await this.upsertMonthSummary(
+            itemIdx,
+            unit.unit_idx,
+            targetDate.format('YYYY-MM-DD'),
+            queryRunner,
+            {ignoreUnitCheck: true, ignoreItemCheck: true}
+          );
+
+          //대상 날짜 1달 증가 및 대상 년도 목록에 년도 추가
+          targetDate = targetDate.add(1, 'month');
+          if (lastYear != targetDate.year()) {
+            lastYear = targetDate.year();
+            targetYear.push(lastYear);
+          }
+        }
+
+        //년간 요약 데이터 insert/update
+        for (const year of targetYear) {
+          await this.upsertYearSummary(itemIdx, unitIdx, `${year}-12-01`, queryRunner, {
+            ignoreUnitCheck: true,
+            ignoreItemCheck: true,
+          });
+        }
+
+        //전체 요약 데이터 insert/update
+        await this.upsertTotalSummary(itemIdx, unitIdx, queryRunner, {
+          ignoreUnitCheck: true,
+          ignoreItemCheck: true,
+        });
+
+        await queryRunner.commitTransaction();
+      } catch (err) {
+        await queryRunner.rollbackTransaction();
+        throw err;
+      } finally {
+        await queryRunner.release();
+      }
+    }
+  }
 }

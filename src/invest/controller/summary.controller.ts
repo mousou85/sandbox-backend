@@ -164,4 +164,24 @@ export class SummaryController {
 
     return new OkResponseDto(summaryDto);
   }
+
+  @ApiOperation({
+    summary: '요약 데이터 재생성',
+    description: '사용자의 모든 상품의 요약 데이터를 재생성',
+  })
+  @ApiOkResponseCustom({model: null})
+  @Get('/remake-all')
+  async remakeSummary(@User() user: AuthUserDto): Promise<OkResponseDto<void>> {
+    const {list: itemList} = await this.investItemService.getItemList(
+      {user_idx: user.userIdx},
+      {getAll: true}
+    );
+
+    //상품별로 처리
+    for (const item of itemList) {
+      await this.investSummaryService.remakeSummary(item.item_idx);
+    }
+
+    return new OkResponseDto();
+  }
 }
