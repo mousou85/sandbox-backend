@@ -7,13 +7,10 @@ import {AuthController} from '@app/auth/auth.controller';
 import {AuthService} from '@app/auth/auth.service';
 import {JwtStrategy, LocalStrategy} from '@app/auth/strategy';
 import {UserModule} from '@app/user/user.module';
-import {ConfigModule as AppConfigModule} from '@config/config.module';
-import {jwtConfig} from '@config/jwt.config';
-import {DbModule} from '@db/db.module';
+import {ConfigModule as AppConfigModule, jwtConfig} from '@config';
 
 @Module({
   imports: [
-    DbModule,
     PassportModule,
     forwardRef(() =>
       JwtModule.registerAsync({
@@ -31,7 +28,7 @@ import {DbModule} from '@db/db.module';
         },
       })
     ),
-    UserModule,
+    forwardRef(() => UserModule),
   ],
   controllers: [AuthController],
   providers: [Logger, AuthService, LocalStrategy, JwtStrategy],

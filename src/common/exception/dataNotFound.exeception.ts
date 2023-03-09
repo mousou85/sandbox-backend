@@ -1,4 +1,5 @@
 import {HttpException, HttpStatus} from '@nestjs/common';
+
 import {CommonHelper} from '@common/helper';
 
 export class DataNotFoundException extends HttpException {

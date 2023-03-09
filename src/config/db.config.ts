@@ -1,7 +1,9 @@
-import {registerAs} from '@nestjs/config';
 import process from 'process';
+
+import {registerAs} from '@nestjs/config';
 import {MixedList} from 'typeorm/common/MixedList';
 import {EntitySchema} from 'typeorm/entity-schema/EntitySchema';
+
 import {
   InvestCompanyEntity,
   InvestGroupEntity,
@@ -14,11 +16,13 @@ import {
   InvestSummaryEntity,
   InvestUnitEntity,
   InvestUnitSetEntity,
+} from '@app/invest/entity';
+import {
   UserEntity,
   UserLoginLogEntity,
   UserOtpEntity,
   UserPasswordSaltEntity,
-} from '@db/entity';
+} from '@app/user/entity';
 
 interface ITypeOrmConfig {
   host: string;

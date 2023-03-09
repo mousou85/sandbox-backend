@@ -26,13 +26,13 @@ import {
   UpdateInvestHistoryDto,
   UrlQueryInvestHistoryListDto,
 } from '@app/invest/dto';
+import {IInvestHistoryCondition} from '@app/invest/repository';
 import {InvestHistoryService, InvestItemService} from '@app/invest/service';
 import {ApiConsumesCustom, ApiListResponse, ApiOkResponseCustom} from '@common/decorator/swagger';
 import {ListResponseDto, OkResponseDto} from '@common/dto';
 import {DataNotFoundException} from '@common/exception';
 import {DateHelper} from '@common/helper';
 import {RequiredPipe} from '@common/pipe';
-import {IInvestHistoryCondition} from '@db/repository';
 
 @ApiTags('투자 히스토리')
 @ApiBearerAuth()
@@ -40,7 +40,8 @@ import {IInvestHistoryCondition} from '@db/repository';
 @Controller('/invest-history/history')
 export class HistoryController {
   constructor(
-    @Inject(Logger) private logger: LoggerService,
+    @Inject(Logger)
+    private logger: LoggerService,
     private investHistoryService: InvestHistoryService,
     private investItemService: InvestItemService
   ) {}

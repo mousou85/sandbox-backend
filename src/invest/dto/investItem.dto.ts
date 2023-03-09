@@ -3,12 +3,11 @@ import {Expose, Transform, Type} from 'class-transformer';
 import {IsNotEmpty, IsOptional, MaxLength, ValidateNested} from 'class-validator';
 
 import {InvestUnitDto} from '@app/invest/dto';
-import {EInvestItemTypeLabel} from '@app/invest/invest.enum';
+import {InvestItemEntity} from '@app/invest/entity';
+import {EInvestItemType, EInvestItemTypeLabel} from '@app/invest/invest.enum';
+import {EYNState} from '@common/db';
 import {IsDateString, IsEnum, IsInt} from '@common/decorator/validate';
-import {DefaultDto} from '@common/dto';
-import {DtoTransform} from '@common/dto.transform';
-import {EInvestItemType, EYNState} from '@db/db.enum';
-import {InvestItemEntity} from '@db/entity';
+import {DefaultDto, DtoTransform} from '@common/dto';
 
 /**
  * 상품 그룹 DTO(심플)

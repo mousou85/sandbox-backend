@@ -1,5 +1,6 @@
-import {registerAs} from '@nestjs/config';
 import * as process from 'process';
+
+import {registerAs} from '@nestjs/config';
 import {Algorithm} from 'jsonwebtoken';
 
 interface IJwtConfig {

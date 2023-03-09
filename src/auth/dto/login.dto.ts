@@ -2,10 +2,9 @@ import {ApiProperty} from '@nestjs/swagger';
 import {Expose, Transform} from 'class-transformer';
 import {IsBoolean, IsNotEmpty, MaxLength} from 'class-validator';
 
+import {EYNState} from '@common/db';
 import {IsEnum, IsInt} from '@common/decorator/validate';
-import {DefaultDto} from '@common/dto';
-import {DtoTransform} from '@common/dto.transform';
-import {EYNState} from '@db/db.enum';
+import {DefaultDto, DtoTransform} from '@common/dto';
 
 export class LoginSuccessDto extends DefaultDto {
   @ApiProperty({description: 'access token', required: true})

@@ -52,7 +52,8 @@ import {RequiredPipe} from '@common/pipe';
 @Controller('/invest-history/item')
 export class ItemController {
   constructor(
-    @Inject(Logger) private logger: LoggerService,
+    @Inject(Logger)
+    private logger: LoggerService,
     private investItemService: InvestItemService,
     private investUnitService: InvestUnitService
   ) {}

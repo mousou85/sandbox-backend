@@ -2,7 +2,7 @@ import {ApiProperty} from '@nestjs/swagger';
 import {Expose, Transform} from 'class-transformer';
 import {IsNotEmpty} from 'class-validator';
 
-import {DtoTransform} from '@common/dto.transform';
+import {DtoTransform} from '@common/dto';
 
 export class UserCredentialDto {
   @ApiProperty({description: 'user id', example: 'test@test.com'})

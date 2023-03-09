@@ -1,8 +1,9 @@
-import {Logger as TypeORMLoggerInterface} from 'typeorm/logger/Logger';
 import {LoggerService} from '@nestjs/common';
-import {createLogger} from '@common/logger/app.logger';
 import {QueryRunner} from 'typeorm';
+import {Logger as TypeORMLoggerInterface} from 'typeorm/logger/Logger';
+
 import {DateHelper} from '@common/helper';
+import {createLogger} from '@common/logger';
 
 export class TypeORMLogger implements TypeORMLoggerInterface {
   private logger: LoggerService;

@@ -1,5 +1,6 @@
 import {Module} from '@nestjs/common';
-import {TypeOrmOptionService} from '@config/service';
+
+import {TypeOrmOptionService} from '@config';
 
 @Module({
   providers: [TypeOrmOptionService],

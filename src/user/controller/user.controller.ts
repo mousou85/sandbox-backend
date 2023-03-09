@@ -3,6 +3,7 @@ import {
   Body,
   Controller,
   Delete,
+  forwardRef,
   Get,
   HttpCode,
   Inject,
@@ -13,19 +14,20 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import {ApiBearerAuth, ApiBody, ApiOperation, ApiTags} from '@nestjs/swagger';
-import {AuthService} from '@app/auth/auth.service';
-import {UserService} from '@app/user/service';
-import {JwtAuthGuard} from '@app/auth/authGuard';
+
 import {User} from '@app/auth/auth.decorator';
+import {AuthService} from '@app/auth/auth.service';
+import {JwtAuthGuard} from '@app/auth/authGuard';
+import {AuthUserDto} from '@app/auth/dto';
 import {
   RegisterOtpDto,
   ResponseRegisterOtpDto,
   UpdateUserInfoDto,
   UserInfoDto,
 } from '@app/user/dto';
-import {OkResponseDto} from '@common/dto';
+import {UserService} from '@app/user/service';
 import {ApiBodyCustom, ApiOkResponseCustom} from '@common/decorator/swagger';
-import {AuthUserDto} from '@app/auth/dto';
+import {OkResponseDto} from '@common/dto';
 import {RequiredPipe} from '@common/pipe';
 
 @ApiTags('사용자')
@@ -34,7 +36,9 @@ import {RequiredPipe} from '@common/pipe';
 @Controller('/user')
 export class UserController {
   constructor(
-    @Inject(Logger) private logger: LoggerService,
+    @Inject(Logger)
+    private logger: LoggerService,
+    @Inject(forwardRef(() => AuthService))
     private authService: AuthService,
     private userService: UserService
   ) {}

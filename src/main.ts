@@ -7,7 +7,7 @@ import {ClsMiddleware} from 'nestjs-cls';
 import {AppModule} from '@app/app.module';
 import {GlobalExceptionFilter} from '@common/global';
 import {createLogger} from '@common/logger';
-import {clsIdGenerator, clsMiddlewareSetup} from '@common/middleware/cls.middleware';
+import {clsIdGenerator, clsMiddlewareSetup} from '@common/middleware';
 import {enableSwaggerModule} from '@common/swagger';
 
 declare const module: any;

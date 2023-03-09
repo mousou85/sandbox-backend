@@ -32,7 +32,8 @@ import {DefaultValuePipe, RequiredPipe, TrimPipe} from '@common/pipe';
 @Controller('/invest-history/summary')
 export class SummaryController {
   constructor(
-    @Inject(Logger) private logger: LoggerService,
+    @Inject(Logger)
+    private logger: LoggerService,
     private investSummaryService: InvestSummaryService,
     private investItemService: InvestItemService
   ) {}

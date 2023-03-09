@@ -1,12 +1,16 @@
 import {Inject, Injectable} from '@nestjs/common';
-import {TypeOrmModuleOptions, TypeOrmOptionsFactory} from '@nestjs/typeorm';
 import {ConfigType} from '@nestjs/config';
+import {TypeOrmModuleOptions, TypeOrmOptionsFactory} from '@nestjs/typeorm';
+
 import {TypeORMLogger} from '@common/logger';
 import {typeOrmConfig} from '@config';
 
 @Injectable()
 export class TypeOrmOptionService implements TypeOrmOptionsFactory {
-  constructor(@Inject(typeOrmConfig.KEY) private config: ConfigType<typeof typeOrmConfig>) {}
+  constructor(
+    @Inject(typeOrmConfig.KEY)
+    private config: ConfigType<typeof typeOrmConfig>
+  ) {}
 
   createTypeOrmOptions(
     connectionName?: string

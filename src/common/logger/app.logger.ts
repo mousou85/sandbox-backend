@@ -1,9 +1,10 @@
+import * as process from 'process';
+
+import {LoggerService} from '@nestjs/common';
+import dayjs from 'dayjs';
+import {utilities as nestWinstonModuleUtilities, WinstonModule} from 'nest-winston';
 import winston from 'winston';
 import winstonDaily from 'winston-daily-rotate-file';
-import {utilities as nestWinstonModuleUtilities, WinstonModule} from 'nest-winston';
-import dayjs from 'dayjs';
-import * as process from 'process';
-import {LoggerService} from '@nestjs/common';
 
 /**
  * date format 변경

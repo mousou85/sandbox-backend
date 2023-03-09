@@ -1,20 +1,20 @@
-import {Injectable} from '@nestjs/common';
+import {forwardRef, Inject, Injectable} from '@nestjs/common';
 import {isDefined, isNotEmpty} from 'class-validator';
 import {DataSource} from 'typeorm';
 
 import {CreateInvestHistoryDto, UpdateInvestHistoryDto} from '@app/invest/dto';
-import {InvestSummaryService} from '@app/invest/service/investSummary.service';
-import {DataNotFoundException} from '@common/exception';
-import {DateHelper} from '@common/helper';
-import {IFindAllResult, IQueryListOption} from '@db/db.interface';
-import {InvestHistoryEntity} from '@db/entity';
+import {InvestHistoryEntity} from '@app/invest/entity';
 import {
   IInvestHistoryCondition,
   IInvestHistoryJoinOption,
   InvestHistoryRepository,
   InvestItemRepository,
   InvestUnitRepository,
-} from '@db/repository';
+} from '@app/invest/repository';
+import {InvestSummaryService} from '@app/invest/service';
+import {IFindAllResult, IQueryListOption} from '@common/db';
+import {DataNotFoundException} from '@common/exception';
+import {DateHelper} from '@common/helper';
 
 @Injectable()
 export class InvestHistoryService {
@@ -23,6 +23,7 @@ export class InvestHistoryService {
     protected investHistoryRepository: InvestHistoryRepository,
     protected investItemRepository: InvestItemRepository,
     protected investUnitRepository: InvestUnitRepository,
+    @Inject(forwardRef(() => InvestSummaryService))
     protected investSummaryService: InvestSummaryService
   ) {}
 

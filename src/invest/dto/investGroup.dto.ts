@@ -3,10 +3,9 @@ import {Expose, Transform, Type} from 'class-transformer';
 import {IsNotEmpty, MaxLength, ValidateNested} from 'class-validator';
 
 import {InvestItemDto} from '@app/invest/dto';
+import {InvestGroupEntity} from '@app/invest/entity';
 import {IsDateString, IsInt} from '@common/decorator/validate';
-import {DefaultDto} from '@common/dto';
-import {DtoTransform} from '@common/dto.transform';
-import {InvestGroupEntity} from '@db/entity';
+import {DefaultDto, DtoTransform} from '@common/dto';
 
 /**
  * 상품 그룹 DTO(심플)

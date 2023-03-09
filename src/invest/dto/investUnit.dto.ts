@@ -2,11 +2,10 @@ import {ApiProperty, PartialType, PickType} from '@nestjs/swagger';
 import {Expose, Transform} from 'class-transformer';
 import {IsNotEmpty} from 'class-validator';
 
+import {InvestUnitEntity} from '@app/invest/entity';
+import {EInvestUnitType} from '@app/invest/invest.enum';
 import {IsEnum, IsInt} from '@common/decorator/validate';
-import {DefaultDto} from '@common/dto';
-import {DtoTransform} from '@common/dto.transform';
-import {EInvestUnitType} from '@db/db.enum';
-import {InvestUnitEntity} from '@db/entity';
+import {DefaultDto, DtoTransform} from '@common/dto';
 
 /**
  * 단위 DTO

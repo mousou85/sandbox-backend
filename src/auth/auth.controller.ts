@@ -31,7 +31,8 @@ import {RequiredPipe} from '@common/pipe';
 @Controller('/auth')
 export class AuthController {
   constructor(
-    @Inject(Logger) private logger: LoggerService,
+    @Inject(Logger)
+    private logger: LoggerService,
     private authService: AuthService,
     private userService: UserService
   ) {}

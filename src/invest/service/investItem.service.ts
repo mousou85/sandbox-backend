@@ -2,16 +2,16 @@ import {BadRequestException, Injectable} from '@nestjs/common';
 import {DataSource, FindOptionsWhere} from 'typeorm';
 
 import {CreateInvestItemDto, UpdateInvestItemDto} from '@app/invest/dto';
-import {DataNotFoundException} from '@common/exception';
-import {IFindAllResult, IQueryListOption} from '@db/db.interface';
-import {InvestItemEntity, InvestUnitEntity, InvestUnitSetEntity} from '@db/entity';
+import {InvestItemEntity, InvestUnitEntity, InvestUnitSetEntity} from '@app/invest/entity';
 import {
   IInvestItemCondition,
   IInvestItemJoinOption,
   InvestHistoryRepository,
   InvestItemRepository,
   InvestUnitRepository,
-} from '@db/repository';
+} from '@app/invest/repository';
+import {IFindAllResult, IQueryListOption} from '@common/db';
+import {DataNotFoundException} from '@common/exception';
 
 @Injectable()
 export class InvestItemService {

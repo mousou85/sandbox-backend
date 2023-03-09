@@ -1,6 +1,6 @@
 import {BaseEntity, SelectQueryBuilder} from 'typeorm';
 
-import {IQueryDateCondition, IQueryDateRangeCondition} from '@db/db.interface';
+import {IQueryDateCondition, IQueryDateRangeCondition} from '@common/db';
 
 /**
  * 헬퍼 옵션

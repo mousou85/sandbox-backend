@@ -1,6 +1,7 @@
-import {CLS_REQ, ClsServiceManager} from 'nestjs-cls';
-import {CustomClsStore} from '@common/middleware/cls.middleware';
 import {Request} from 'express';
+import {CLS_REQ, ClsServiceManager} from 'nestjs-cls';
+
+import {CustomClsStore} from '@common/middleware';
 
 export class HttpHelper {
   private static cls = ClsServiceManager.getClsService<CustomClsStore>();

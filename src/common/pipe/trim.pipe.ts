@@ -1,6 +1,7 @@
 import {ArgumentMetadata, Injectable, PipeTransform} from '@nestjs/common';
-import {CommonHelper} from '@common/helper';
 import {isDefined, isString} from 'class-validator';
+
+import {CommonHelper} from '@common/helper';
 
 type TTrimType = 'both' | 'left' | 'right';
 

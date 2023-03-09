@@ -2,12 +2,11 @@ import {ApiProperty} from '@nestjs/swagger';
 import {Expose, Transform, Type} from 'class-transformer';
 import {IsNotEmpty, ValidateNested} from 'class-validator';
 
+import {InvestSummaryEntity} from '@app/invest/entity';
+import {EInvestUnitType} from '@app/invest/invest.enum';
 import {IsEnum} from '@common/decorator/validate';
-import {DefaultDto} from '@common/dto';
-import {DtoTransform} from '@common/dto.transform';
+import {DefaultDto, DtoTransform} from '@common/dto';
 import {CommonHelper} from '@common/helper';
-import {EInvestUnitType} from '@db/db.enum';
-import {InvestSummaryEntity} from '@db/entity';
 
 /**
  * 전체 요약 DTO의 유입/유출 속성 DTO

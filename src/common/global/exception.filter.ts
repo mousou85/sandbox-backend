@@ -1,3 +1,5 @@
+import * as process from 'process';
+
 import {
   ArgumentsHost,
   Catch,
@@ -8,7 +10,7 @@ import {
 } from '@nestjs/common';
 import {Request, Response} from 'express';
 import {TypeORMError} from 'typeorm';
-import * as process from 'process';
+
 import {ErrorResponseDto} from '@common/dto';
 
 /**

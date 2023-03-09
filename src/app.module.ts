@@ -7,17 +7,20 @@ import {
   ValidationPipe,
 } from '@nestjs/common';
 import {ConfigModule} from '@nestjs/config';
-import {ConfigModule as AppConfigModule} from '@config/config.module';
-import {TypeOrmModule} from '@nestjs/typeorm';
-import {DbModule} from '@db/db.module';
-import {HttpLoggerMiddleware} from '@common/middleware';
 import {APP_PIPE} from '@nestjs/core';
-import {AuthModule} from '@app/auth/auth.module';
-import {UserModule} from '@app/user/user.module';
+import {TypeOrmModule} from '@nestjs/typeorm';
 import {ClsModule} from 'nestjs-cls';
-import {TypeOrmOptionService} from '@config/service';
-import {jwtConfig, typeOrmConfig} from '@config';
+
+import {AuthModule} from '@app/auth/auth.module';
 import {InvestModule} from '@app/invest/invest.module';
+import {UserModule} from '@app/user/user.module';
+import {HttpLoggerMiddleware} from '@common/middleware';
+import {
+  ConfigModule as AppConfigModule,
+  jwtConfig,
+  typeOrmConfig,
+  TypeOrmOptionService,
+} from '@config';
 
 @Module({
   imports: [
@@ -31,7 +34,6 @@ import {InvestModule} from '@app/invest/invest.module';
       useClass: TypeOrmOptionService,
       inject: [TypeOrmOptionService],
     }),
-    DbModule,
     forwardRef(() => AuthModule),
     UserModule,
     InvestModule,

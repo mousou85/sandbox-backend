@@ -2,17 +2,17 @@ import {Injectable} from '@nestjs/common';
 import dayjs from 'dayjs';
 import {DataSource, QueryRunner} from 'typeorm';
 
-import {DataNotFoundException} from '@common/exception';
-import {DateHelper} from '@common/helper';
-import {EInvestSummaryDateType} from '@db/db.enum';
-import {InvestSummaryDateEntity, InvestSummaryEntity} from '@db/entity';
+import {InvestSummaryDateEntity, InvestSummaryEntity} from '@app/invest/entity';
+import {EInvestSummaryDateType} from '@app/invest/invest.enum';
 import {
   InvestHistoryRepository,
   InvestItemRepository,
   InvestSummaryDateRepository,
   InvestSummaryRepository,
   InvestUnitRepository,
-} from '@db/repository';
+} from '@app/invest/repository';
+import {DataNotFoundException} from '@common/exception';
+import {DateHelper} from '@common/helper';
 
 /**
  * 요약 데이터 insert/update 옵션

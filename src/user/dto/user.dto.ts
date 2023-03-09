@@ -1,10 +1,10 @@
-import {DefaultDto} from '@common/dto';
-import {UserEntity} from '@db/entity';
 import {ApiProperty, PickType} from '@nestjs/swagger';
 import {Expose, Transform} from 'class-transformer';
-import {IsEnum, IsInt} from '@common/decorator/validate';
 import {IsNotEmpty, IsOptional, MaxLength, MinLength, ValidateIf} from 'class-validator';
-import {DtoTransform} from '@common/dto.transform';
+
+import {UserEntity} from '@app/user/entity';
+import {IsEnum, IsInt} from '@common/decorator/validate';
+import {DefaultDto, DtoTransform} from '@common/dto';
 
 /**
  * 사용자 정보 DTO

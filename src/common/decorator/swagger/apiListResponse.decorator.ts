@@ -1,10 +1,11 @@
 import {applyDecorators, Type} from '@nestjs/common';
-import {ListResponseDto} from '@common/dto';
 import {ApiExtraModels, ApiOkResponse, ApiResponseOptions, getSchemaPath} from '@nestjs/swagger';
 import {
   ReferenceObject,
   SchemaObject,
 } from '@nestjs/swagger/dist/interfaces/open-api-spec.interface';
+
+import {ListResponseDto} from '@common/dto';
 
 /**
  * swagger 성공 결과 값 데코레이터

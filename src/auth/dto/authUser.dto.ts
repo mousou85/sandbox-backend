@@ -1,10 +1,10 @@
 import {Transform} from 'class-transformer';
 import {IsNotEmpty, IsOptional, MaxLength} from 'class-validator';
 
+import {UserEntity} from '@app/user/entity';
 import {IsEnum, IsInt} from '@common/decorator/validate';
-import {DtoTransform} from '@common/dto.transform';
+import {DtoTransform} from '@common/dto';
 import {DtoHelper} from '@common/helper';
-import {UserEntity} from '@db/entity';
 
 /**
  * 인증 유저 정보

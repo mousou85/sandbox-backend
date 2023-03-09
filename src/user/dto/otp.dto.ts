@@ -1,8 +1,8 @@
-import {DefaultDto} from '@common/dto';
+import {ApiProperty} from '@nestjs/swagger';
 import {Expose, Transform} from 'class-transformer';
 import {IsNotEmpty} from 'class-validator';
-import {ApiProperty} from '@nestjs/swagger';
-import {DtoTransform} from '@common/dto.transform';
+
+import {DefaultDto, DtoTransform} from '@common/dto';
 
 /**
  * OTP 등록 요청 응답 DTO

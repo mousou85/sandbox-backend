@@ -6,9 +6,10 @@ import * as speakeasy from 'speakeasy';
 import {DataSource} from 'typeorm';
 
 import {UpdateUserInfoDto} from '@app/user/dto';
+import {UserEntity} from '@app/user/entity';
+import {IUserJoinOption, UserLoginLogRepository, UserRepository} from '@app/user/repository';
+import {EUserLoginLogType} from '@app/user/user.enum';
 import {DataNotFoundException} from '@common/exception';
-import {EUserLoginLogType, UserEntity} from '@db/entity';
-import {IUserJoinOption, UserLoginLogRepository, UserRepository} from '@db/repository';
 
 @Injectable()
 export class UserService {

@@ -5,11 +5,11 @@ import {TokenExpiredError} from 'jsonwebtoken';
 import * as speakeasy from 'speakeasy';
 
 import {AuthUserDto} from '@app/auth/dto';
-import {UserService} from '@app/user/service/user.service';
+import {UserEntity} from '@app/user/entity';
+import {UserLoginLogRepository, UserRepository} from '@app/user/repository';
+import {UserService} from '@app/user/service';
 import {MissingParameterException, UserNotFoundException} from '@common/exception';
 import {jwtConfig as jwtConfigBase} from '@config';
-import {UserEntity} from '@db/entity';
-import {UserLoginLogRepository, UserRepository} from '@db/repository';
 
 @Injectable()
 export class AuthService {
@@ -18,7 +18,8 @@ export class AuthService {
     protected userLoginLogRepository: UserLoginLogRepository,
     protected userService: UserService,
     protected jwtService: JwtService,
-    @Inject(jwtConfigBase.KEY) protected jwtConfig: ConfigType<typeof jwtConfigBase>
+    @Inject(jwtConfigBase.KEY)
+    protected jwtConfig: ConfigType<typeof jwtConfigBase>
   ) {}
 
   /**

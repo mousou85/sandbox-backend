@@ -45,7 +45,8 @@ import {RequiredPipe} from '@common/pipe';
 @Controller('/invest-history/group')
 export class GroupController {
   constructor(
-    @Inject(Logger) private logger: LoggerService,
+    @Inject(Logger)
+    private logger: LoggerService,
     private investGroupService: InvestGroupService,
     private investItemService: InvestItemService
   ) {}

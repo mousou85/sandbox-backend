@@ -1,5 +1,6 @@
-import {ResponseBaseDto} from '@common/dto';
 import {ApiProperty} from '@nestjs/swagger';
+
+import {ResponseBaseDto} from '@common/dto';
 
 /**
  * error response dto

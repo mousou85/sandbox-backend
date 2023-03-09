@@ -31,7 +31,8 @@ import {RequiredPipe} from '@common/pipe';
 @Controller('/invest-history/unit')
 export class UnitController {
   constructor(
-    @Inject(Logger) private logger: LoggerService,
+    @Inject(Logger)
+    private logger: LoggerService,
     private investUnitService: InvestUnitService
   ) {}
 
