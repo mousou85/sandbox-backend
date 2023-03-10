@@ -28,6 +28,7 @@
     "@nestjs/passport": "^9.0.0",
     "@nestjs/platform-express": "^9.0.0",
     "@nestjs/typeorm": "^9.0.1",
+    "@nestjs/swagger": "^6.2.1",
     "@supercharge/request-ip": "^1.2.0",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.0",
@@ -50,7 +51,6 @@
   },
   "devDependencies": {
     "@nestjs/schematics": "^9.0.0",
-    "@nestjs/swagger": "^6.2.1",
     "@nestjs/testing": "^9.0.0",
     "@types/express": "^4.17.13",
     "@types/jest": "^29.4.0",
