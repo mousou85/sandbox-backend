@@ -36,8 +36,8 @@ interface ITypeOrmConfig {
 
 export const typeOrmConfig = registerAs('typeOrm', (): ITypeOrmConfig => {
   return {
-    host: process.env.DB_HOST,
-    port: parseInt(process.env.DB_PORT),
+    host: process.env.DB_HOST || 'localhost',
+    port: process.env.DB_PORT ? parseInt(process.env.DB_PORT) : 3306,
     database: process.env.DB_DATABASE,
     user: process.env.DB_USER,
     password: process.env.DB_PASSWORD,
