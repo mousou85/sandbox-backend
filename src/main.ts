@@ -14,7 +14,7 @@ declare const module: any;
 
 async function bootstrap() {
   //set logger
-  const logger = createLogger('NEST');
+  const logger = createLogger('NEST', {consoleLogLevel: process.env.LOGGER_CONSOLE_LEVEL});
 
   //set app instance
   const app = await NestFactory.create(AppModule, {logger: logger});

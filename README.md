@@ -51,6 +51,7 @@ LOGGER_CONSOLE_LEVEL=#로깅할 로그 레벨(silly|debug|verbose|info|warn|erro
 LOGGER_FILE_ENABLE=#로그 파일 생성 여부(true|false). 기본값: false
 LOGGER_FILE_PATH=#로그 파일 생성 경로
 LOGGER_DB=#DB 쿼리 로깅 여부(true|false). 기본값: false
+LOGGER_HTTP=#HTTP 접속 로깅 여부(true|false). 기본값: false
 ```
 
 # API 문서

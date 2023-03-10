@@ -1,3 +1,5 @@
+import process from 'process';
+
 import {
   forwardRef,
   Logger,
@@ -44,6 +46,8 @@ import {
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {
     //모든 라우터에 HTTP 접속 로거 미들웨어
-    consumer.apply(HttpLoggerMiddleware).forRoutes('*');
+    if (process.env.LOGGER_HTTP === 'true') {
+      consumer.apply(HttpLoggerMiddleware).forRoutes('*');
+    }
   }
 }

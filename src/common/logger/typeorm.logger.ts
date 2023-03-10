@@ -9,7 +9,7 @@ export class TypeORMLogger implements TypeORMLoggerInterface {
   private logger: LoggerService;
 
   constructor(appName: string = 'DB') {
-    this.logger = createLogger(appName);
+    this.logger = createLogger(appName, {consoleLogLevel: 'debug'});
   }
 
   log(level: 'log' | 'info' | 'warn', message: any, queryRunner?: QueryRunner) {

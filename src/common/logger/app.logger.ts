@@ -37,16 +37,24 @@ const logFileFormat = winston.format.printf((info) => {
 /**
  * nest.js용 winston 로거 생성
  */
-export const createLogger = (appName: string): LoggerService => {
+export const createLogger = (
+  appName: string,
+  opts?: {
+    consoleLogLevel: string | 'silly' | 'debug' | 'verbose' | 'info' | 'warn' | 'error';
+  }
+): LoggerService => {
   //set vars: logger env
-  const {LOGGER_CONSOLE_LEVEL, LOGGER_FILE_ENABLE, LOGGER_FILE_PATH} = process.env;
+  const {LOGGER_FILE_ENABLE, LOGGER_FILE_PATH} = process.env;
+
+  //set vars: options
+  const {consoleLogLevel} = opts;
 
   //트랜스포터 정의
   const transports: winston.transport[] = [];
 
   transports.push(
     new winston.transports.Console({
-      level: LOGGER_CONSOLE_LEVEL || 'error',
+      level: consoleLogLevel || 'error',
       format: winston.format.combine(
         timestampFormat(),
         levelFormat(),

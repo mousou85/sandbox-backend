@@ -12,7 +12,7 @@ export class HttpLoggerMiddleware implements NestMiddleware {
   private logger: LoggerService;
 
   constructor() {
-    this.logger = createLogger('HTTP');
+    this.logger = createLogger('HTTP', {consoleLogLevel: 'info'});
   }
 
   use(req: Request, res: Response, next: (error?: any) => void): any {
