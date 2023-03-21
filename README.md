@@ -1,7 +1,9 @@
+![build test](https://github.com/mousou85/sandbox-backend/actions/workflows/build-test.yml/badge.svg)
+
 # SANDBOX BACKEND 
 [sandbox 앱](https://github.com/mousou85/sandbox)에서 백엔드 api만 분리하여 nest.js로 구현한 코드
 
-# 설치
+## 설치
 ```shell
 # 개발 환경
 $ npm i
@@ -10,7 +12,7 @@ $ npm i
 $ npm i --production
 ```
 
-# 실행
+## 실행
 ```shell
 # 개발 환경
 $ npm run start:dev
@@ -24,7 +26,7 @@ $ npm run build
 $ npm run start:prod
 ```
 
-# environment
+## environment
 `.env.sample`파일명을 `.env`로 수정 후 필요한 정보 입력 
 ```shell
 $ mv .env.sample .env
@@ -54,5 +56,5 @@ LOGGER_DB=#DB 쿼리 로깅 여부(true|false). 기본값: false
 LOGGER_HTTP=#HTTP 접속 로깅 여부(true|false). 기본값: false
 ```
 
-# API 문서
+## API 문서
 개발 환경(`npm run start:dev`)으로 실행 후 `http://localhost:3000/api-doc` 에서 확인 
