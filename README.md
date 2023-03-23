@@ -56,5 +56,29 @@ LOGGER_DB=#DB 쿼리 로깅 여부(true|false). 기본값: false
 LOGGER_HTTP=#HTTP 접속 로깅 여부(true|false). 기본값: false
 ```
 
+## PM2 설정
+`ecosystem.config.js` 설정 내용 샘플
+```js
+module.exports = {
+  apps: [
+    {
+      name: 'sandbox-backend',
+      cwd: '/어플리케이션 경로',
+      script: 'dist/main.js',
+      instances: 0,
+      exec_mode: 'cluster',
+      autorestart: true,
+      max_memory_restart: '300M',
+      merge_logs: true,
+      watch: false,
+      user: "실행할 사용자",
+      output: '/var/log/pm2/sandbox-backend/out.log',
+      error: '/var/log/pm2/sandbox-backend/error.log',
+    }
+  ]
+}
+
+```
+
 ## API 문서
 개발 환경(`npm run start:dev`)으로 실행 후 `http://localhost:3000/api-doc` 에서 확인 
