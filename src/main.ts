@@ -17,7 +17,7 @@ async function bootstrap() {
   const logger = createLogger('NEST', {consoleLogLevel: process.env.LOGGER_CONSOLE_LEVEL});
 
   //set app instance
-  const app = await NestFactory.create(AppModule, {logger: logger});
+  const app = await NestFactory.create(AppModule, {logger: logger, cors: true});
 
   //set cls middleware
   app.use(
