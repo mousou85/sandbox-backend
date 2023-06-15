@@ -100,14 +100,23 @@ export class InvestItemService {
   async updateItem(itemIdx: number, updateDto: UpdateInvestItemDto): Promise<InvestItemEntity> {
     const itemEntity = await this.investItemRepository.findOneBy({item_idx: itemIdx});
     if (!itemEntity) throw new DataNotFoundException('invest item');
+    const oldIsClose = itemEntity.is_close;
 
     //set vars: update dto props
-    const {itemType, itemName} = updateDto;
+    const {itemType, itemName, isClose, closedAt} = updateDto;
 
     //상품 update
     if (itemType) itemEntity.item_type = itemType;
     if (itemName) itemEntity.item_name = itemName;
+    if (isClose) {
+      itemEntity.is_close = isClose;
+      itemEntity.closed_at = isClose == 'y' ? closedAt : null;
+    }
     await this.investItemRepository.save(itemEntity);
+
+    //isClose: y 변경시 summary update
+    if (isClose == 'y' && oldIsClose != isClose) {
+    }
 
     return itemEntity;
   }

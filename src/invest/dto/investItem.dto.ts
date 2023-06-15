@@ -1,6 +1,6 @@
 import {ApiExtraModels, ApiProperty, PartialType, PickType} from '@nestjs/swagger';
 import {Expose, Transform, Type} from 'class-transformer';
-import {IsNotEmpty, IsOptional, MaxLength, ValidateNested} from 'class-validator';
+import {IsNotEmpty, IsOptional, MaxLength, ValidateIf, ValidateNested} from 'class-validator';
 
 import {InvestUnitDto} from '@app/invest/dto';
 import {InvestItemEntity} from '@app/invest/entity';
@@ -48,7 +48,7 @@ export class InvestItemDtoSimple extends DefaultDto {
   @Transform(({value}) => DtoTransform.trim(value))
   isClose: EYNState;
 
-  @ApiProperty({description: '투자 종료 시간', required: false})
+  @ApiProperty({description: '투자 종료 시간', example: 'YYYY-MM-DD HH:mm:ss', required: false})
   @Expose()
   @IsDateString({allowEmptyString: false})
   @IsOptional()
@@ -114,5 +114,9 @@ export class CreateInvestItemDto extends PickType(InvestItemDtoSimple, [
  * 상품 수정 DTO
  */
 export class UpdateInvestItemDto extends PartialType(
-  PickType(InvestItemDtoSimple, ['itemType', 'itemName'] as const)
-) {}
+  PickType(InvestItemDtoSimple, ['itemType', 'itemName', 'isClose', 'closedAt'] as const)
+) {
+  @ApiProperty({description: '투자 종료 시간(isClose: y 면 필수)'})
+  @ValidateIf((obj) => obj?.isClose == EYNState.y)
+  closedAt?: string;
+}
