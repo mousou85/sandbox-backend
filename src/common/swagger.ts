@@ -4,7 +4,7 @@ import {DocumentBuilder, SwaggerModule} from '@nestjs/swagger';
 import {swaggerConfig} from '@config';
 
 export const enableSwaggerModule = (app: INestApplication) => {
-  for (const item of swaggerConfig) {
+  for (const item of swaggerConfig()) {
     const builder = new DocumentBuilder()
       .setTitle(item.title)
       .setDescription(item.description)
