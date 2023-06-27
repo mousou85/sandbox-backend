@@ -1,6 +1,6 @@
 import {Injectable} from '@nestjs/common';
 import dayjs from 'dayjs';
-import {DataSource, QueryRunner} from 'typeorm';
+import {DataSource, FindOptionsWhere, QueryRunner} from 'typeorm';
 
 import {InvestSummaryDateEntity, InvestSummaryEntity} from '@app/invest/entity';
 import {EInvestSummaryDateType} from '@app/invest/invest.enum';
@@ -12,7 +12,7 @@ import {
   InvestUnitRepository,
 } from '@app/invest/repository';
 import {DataNotFoundException} from '@common/exception';
-import {DateHelper} from '@common/helper';
+import {DateHelper, TDateType} from '@common/helper';
 
 /**
  * 요약 데이터 insert/update 옵션
@@ -131,6 +131,34 @@ export class InvestSummaryService {
     }
 
     return entity;
+  }
+
+  /**
+   * month summary delete
+   * @param itemIdx
+   * @param unitIdx
+   * @param targetDate
+   * @param queryRunner
+   * @protected
+   */
+  protected async deleteMonthSummary(
+    itemIdx: number,
+    unitIdx: number,
+    targetDate: TDateType,
+    queryRunner?: QueryRunner
+  ) {
+    targetDate = DateHelper.format(targetDate, 'YYYY-MM-01');
+
+    const criteria: FindOptionsWhere<InvestSummaryDateEntity> = {
+      item_idx: itemIdx,
+      unit_idx: unitIdx,
+      summary_type: 'month',
+      summary_date: targetDate,
+    };
+
+    queryRunner
+      ? await queryRunner.manager.delete(InvestSummaryDateEntity, criteria)
+      : await this.investSummaryDateRepository.delete(criteria);
   }
 
   /**
@@ -327,6 +355,7 @@ export class InvestSummaryService {
    * @param targetDate 대상 요약 일자
    * @param queryRunner 트랜잭션 사용시
    * @param opts
+   * @todo 상품 종료일 관련 추가 처리 필요
    */
   async upsertYearSummary(
     itemIdx: number,
@@ -561,9 +590,15 @@ export class InvestSummaryService {
    * @param itemIdx
    */
   async remakeSummary(itemIdx: number) {
-    //상품 유무 체크
-    const hasItem = await this.investItemRepository.existsBy({item_idx: itemIdx});
-    if (!hasItem) throw new DataNotFoundException('invest item');
+    //set vars: 상품 데이터
+    const itemEntity = await this.investItemRepository.findByCondition({item_idx: itemIdx});
+    if (!itemEntity) throw new DataNotFoundException('invest item');
+
+    //set vars: 상품 종료일(또는 만기일) - 해당월의 마지막일로 설정
+    let itemCloseDate: dayjs.Dayjs = null;
+    if (itemEntity.is_close == 'y' && itemEntity.closed_at) {
+      itemCloseDate = dayjs(DateHelper.endOfMonth(itemEntity.closed_at));
+    }
 
     //set vars: 단위 리스트
     const {list: unitList} = await this.investUnitRepository.findAllByCondition(
@@ -587,39 +622,65 @@ export class InvestSummaryService {
         .getRawOne();
       if (!dateRange || !dateRange.minDate || !dateRange.maxDate) continue;
 
-      //set vars: 날짜 관련
-      const minDate = dayjs(dateRange.minDate);
-      const maxDate = dayjs(dateRange.maxDate);
-      let targetDate = minDate.clone();
-      let lastYear = minDate.year();
-      const targetYear = [minDate.year()];
+      //set vars: 날짜 관련(month summary 관련)
+      const summaryMinDate = dayjs(dateRange.minDate);
+      let summaryMaxDate = dayjs(dateRange.maxDate);
+      let targetSummaryDate = summaryMinDate.clone();
+      let deleteSummaryMinDate: dayjs.Dayjs = null;
+      let deleteSummaryMaxDate: dayjs.Dayjs = null;
+      if (itemCloseDate && summaryMaxDate > itemCloseDate) {
+        summaryMaxDate = itemCloseDate;
+        deleteSummaryMinDate = itemCloseDate.add(1, 'month');
+        deleteSummaryMaxDate = summaryMaxDate;
+      }
+
+      //set vars: 날짜 관련(year summary 관련)
+      let summaryLastYear = summaryMinDate.year();
+      const summaryYears = [summaryLastYear];
 
       //트랜잭션 처리
       const queryRunner = this.dataSource.createQueryRunner();
       await queryRunner.connect();
       await queryRunner.startTransaction();
       try {
-        //기간 범위를 1달 단위로 반복하여 처리
-        while (targetDate <= maxDate) {
-          //월간 요약 데이터 insert/update
+        /*
+         * month summary insert/update
+         * - 기간 범위를 1달 단위로 반복하여 처리
+         * - year summary insert/update용 years 배열에 값 할당
+         */
+        while (targetSummaryDate <= summaryMaxDate) {
+          //month summary insert/update
           await this.upsertMonthSummary(
             itemIdx,
-            unit.unit_idx,
-            targetDate.format('YYYY-MM-DD'),
+            unitIdx,
+            targetSummaryDate.format('YYYY-MM-DD'),
             queryRunner,
             {ignoreUnitCheck: true, ignoreItemCheck: true}
           );
 
           //대상 날짜 1달 증가 및 대상 년도 목록에 년도 추가
-          targetDate = targetDate.add(1, 'month');
-          if (lastYear != targetDate.year()) {
-            lastYear = targetDate.year();
-            targetYear.push(lastYear);
+          targetSummaryDate = targetSummaryDate.add(1, 'month');
+          if (summaryLastYear != targetSummaryDate.year()) {
+            summaryLastYear = targetSummaryDate.year();
+            summaryYears.push(summaryLastYear);
+          }
+        }
+
+        /*
+         * @todo 코드 분리 필요
+         * month summary delete
+         * - itemCloseDate가 있으면 해당 일자 이후 summary 삭제
+         */
+        if (deleteSummaryMinDate && deleteSummaryMaxDate) {
+          while (deleteSummaryMinDate <= deleteSummaryMaxDate) {
+            await this.deleteMonthSummary(itemIdx, unitIdx, deleteSummaryMinDate, queryRunner);
+
+            deleteSummaryMinDate = deleteSummaryMinDate.add(1, 'month');
           }
         }
 
         //년간 요약 데이터 insert/update
-        for (const year of targetYear) {
+        for (const year of summaryYears) {
           await this.upsertYearSummary(itemIdx, unitIdx, `${year}-12-01`, queryRunner, {
             ignoreUnitCheck: true,
             ignoreItemCheck: true,

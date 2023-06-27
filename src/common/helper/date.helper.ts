@@ -1,5 +1,7 @@
 import dayjs, {OpUnitType, QUnitType} from 'dayjs';
 
+export type TDateType = string | number | Date | dayjs.Dayjs;
+
 export class DateHelper {
   /**
    * 현재 날짜/시간 반환
@@ -14,10 +16,7 @@ export class DateHelper {
    * @param [date=now] 날짜(default: 현재시간)
    * @param [format=YYYY-MM-DD　HH:mm:ss] 날짜 포맷
    */
-  static format(
-    date?: string | number | Date | dayjs.Dayjs,
-    format: string = 'YYYY-MM-DD HH:mm:ss'
-  ): string {
+  static format(date?: TDateType, format: string = 'YYYY-MM-DD HH:mm:ss'): string {
     return dayjs(date ?? undefined).format(format);
   }
 
@@ -25,7 +24,7 @@ export class DateHelper {
    * 해당 월의 마지막 일 반환
    * @param date
    */
-  static endOfMonth(date?: string | number | Date | dayjs.Dayjs): string {
+  static endOfMonth(date?: TDateType): string {
     return this.endOf(date, 'month', 'YYYY-MM-DD');
   }
 
@@ -33,7 +32,7 @@ export class DateHelper {
    * 해당 년도 마지막 일 반환
    * @param date
    */
-  static endOfYear(date?: string | number | Date | dayjs.Dayjs): string {
+  static endOfYear(date?: TDateType): string {
     return this.endOf(date, 'year', 'YYYY-MM-DD');
   }
 
@@ -46,7 +45,7 @@ export class DateHelper {
    * @param format
    */
   static endOf(
-    date?: string | number | Date | dayjs.Dayjs,
+    date?: TDateType,
     unit: OpUnitType = 'month',
     format: string = 'YYYY-MM-DD'
   ): string {
@@ -68,8 +67,8 @@ export class DateHelper {
    * @return criteriaDate가 targetDate보다 이전이면 음수반환, 이후이면 양수반환
    */
   static diff(
-    criteriaDate: string | number | Date | dayjs.Dayjs,
-    targetDate: string | number | Date | dayjs.Dayjs,
+    criteriaDate: TDateType,
+    targetDate: TDateType,
     unit: QUnitType = 'milliseconds'
   ): number {
     criteriaDate = dayjs(criteriaDate);

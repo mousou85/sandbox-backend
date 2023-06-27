@@ -13,13 +13,16 @@ import {
 import {IFindAllResult, IQueryListOption} from '@common/db';
 import {DataNotFoundException} from '@common/exception';
 
+import {InvestSummaryService} from './investSummary.service';
+
 @Injectable()
 export class InvestItemService {
   constructor(
     protected dataSource: DataSource,
     protected investItemRepository: InvestItemRepository,
     protected investUnitRepository: InvestUnitRepository,
-    protected investHistoryRepository: InvestHistoryRepository
+    protected investHistoryRepository: InvestHistoryRepository,
+    protected investSummaryService: InvestSummaryService
   ) {}
 
   /**
@@ -104,6 +107,7 @@ export class InvestItemService {
     const itemEntity = await this.investItemRepository.findOneBy({item_idx: itemIdx});
     if (!itemEntity) throw new DataNotFoundException('invest item');
     const oldIsClose = itemEntity.is_close;
+    const oldClosedAt = itemEntity.closed_at;
 
     //set vars: update dto props
     const {itemType, itemName, isClose, closedAt} = updateDto;
@@ -119,8 +123,9 @@ export class InvestItemService {
     }
     await this.investItemRepository.save(itemEntity);
 
-    //isClose: y 변경시 summary update
-    if (isClose == 'y' && oldIsClose != isClose) {
+    //상품 종료 관련 값이 변경되었으면 summary 데이터 업데이트
+    if (isClose != oldIsClose || closedAt != oldClosedAt) {
+      await this.investSummaryService.remakeSummary(itemIdx);
     }
 
     return itemEntity;
