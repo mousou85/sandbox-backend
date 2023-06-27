@@ -87,6 +87,9 @@ export class InvestItemService {
     itemEntity.user_idx = userIdx;
     itemEntity.item_type = createDto.itemType;
     itemEntity.item_name = createDto.itemName;
+    if (createDto.closedAt) {
+      itemEntity.closed_at = createDto.closedAt;
+    }
     await this.investItemRepository.save(itemEntity);
 
     return itemEntity;
@@ -110,7 +113,9 @@ export class InvestItemService {
     if (itemName) itemEntity.item_name = itemName;
     if (isClose) {
       itemEntity.is_close = isClose;
-      itemEntity.closed_at = isClose == 'y' ? closedAt : null;
+    }
+    if (closedAt) {
+      itemEntity.closed_at = closedAt;
     }
     await this.investItemRepository.save(itemEntity);
 
