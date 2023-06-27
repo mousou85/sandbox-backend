@@ -71,9 +71,9 @@ export class InvestItemEntity extends BaseEntity {
   is_close: EYNState;
 
   @Column({
-    type: 'timestamp',
+    type: 'date',
     nullable: true,
-    transformer: new DateTransformer(),
+    transformer: new DateTransformer('YYYY-MM-DD'),
   })
   closed_at: string;
 

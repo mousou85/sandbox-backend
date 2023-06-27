@@ -6,7 +6,7 @@ import {InvestUnitDto} from '@app/invest/dto';
 import {InvestItemEntity} from '@app/invest/entity';
 import {EInvestItemType, EInvestItemTypeLabel} from '@app/invest/invest.enum';
 import {EYNState} from '@common/db';
-import {IsDateString, IsEnum, IsInt} from '@common/decorator/validate';
+import {IsDateOnlyString, IsDateString, IsEnum, IsInt} from '@common/decorator/validate';
 import {DefaultDto, DtoTransform} from '@common/dto';
 
 /**
@@ -48,11 +48,11 @@ export class InvestItemDtoSimple extends DefaultDto {
   @Transform(({value}) => DtoTransform.trim(value))
   isClose: EYNState;
 
-  @ApiProperty({description: '투자 종료 시간', example: 'YYYY-MM-DD HH:mm:ss', required: false})
+  @ApiProperty({description: '투자 종료 시간', example: 'YYYY-MM-DD', required: false})
   @Expose()
-  @IsDateString({allowEmptyString: false})
+  @IsDateOnlyString({allowEmptyString: false, format: 'full'})
   @IsOptional()
-  @Transform(({value}) => DtoTransform.parseDate(value))
+  @Transform(({value}) => DtoTransform.parseDate(value, 'YYYY-MM-DD'))
   closedAt?: string;
 
   @ApiProperty({description: '상품 타입 라벨', required: true, enum: EInvestItemTypeLabel})
