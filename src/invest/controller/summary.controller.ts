@@ -19,7 +19,11 @@ import {
   InvestTotalSummaryDto,
   InvestYearlySummaryDto,
 } from '@app/invest/dto';
-import {InvestItemService, InvestSummaryService} from '@app/invest/service';
+import {
+  InvestItemService,
+  InvestSummaryDateService,
+  InvestSummaryService,
+} from '@app/invest/service';
 import {ApiOkResponseCustom} from '@common/decorator/swagger';
 import {OkResponseDto} from '@common/dto';
 import {DataNotFoundException} from '@common/exception';
@@ -35,6 +39,7 @@ export class SummaryController {
     @Inject(Logger)
     private logger: LoggerService,
     private investSummaryService: InvestSummaryService,
+    private investSummaryDateService: InvestSummaryDateService,
     private investItemService: InvestItemService
   ) {}
 
@@ -62,7 +67,7 @@ export class SummaryController {
     if (!hasItem) throw new DataNotFoundException('invest item');
 
     //set vars: 요약 데이터
-    const summaryEntity = await this.investSummaryService.getTotalSummary(itemIdx, unit);
+    const summaryEntity = await this.investSummaryService.getSummary(itemIdx, unit);
 
     //set vars: dto
     const summaryDto = new InvestTotalSummaryDto(summaryEntity);
@@ -105,7 +110,7 @@ export class SummaryController {
     date = DateHelper.format(date, 'YYYY-MM-01');
 
     //set vars: 요약 데이터
-    const summaryEntity = await this.investSummaryService.getDateSummary(
+    const summaryEntity = await this.investSummaryDateService.getSummary(
       itemIdx,
       unit,
       'month',
@@ -153,7 +158,7 @@ export class SummaryController {
     const date = `${year}-01-01`;
 
     //set vars: 요약 데이터
-    const summaryEntity = await this.investSummaryService.getDateSummary(
+    const summaryEntity = await this.investSummaryDateService.getSummary(
       itemIdx,
       unit,
       'year',

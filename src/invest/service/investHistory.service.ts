@@ -125,10 +125,7 @@ export class InvestHistoryService {
       await entityManager.save(historyEntity);
 
       //요약 데이터 생성/갱신
-      await this.investSummaryService.upsertSummary(itemIdx, unitIdx, historyDate, queryRunner, {
-        ignoreUnitCheck: true,
-        ignoreItemCheck: true,
-      });
+      await this.investSummaryService.upsertAllSummary(itemIdx, unitIdx, historyDate, queryRunner);
 
       await queryRunner.commitTransaction();
 
@@ -191,15 +188,11 @@ export class InvestHistoryService {
           summaryTargetDate = historyEntity.history_date;
         }
 
-        await this.investSummaryService.upsertSummary(
+        await this.investSummaryService.upsertAllSummary(
           historyEntity.item_idx,
           historyEntity.unit_idx,
           summaryTargetDate,
-          queryRunner,
-          {
-            ignoreUnitCheck: true,
-            ignoreItemCheck: true,
-          }
+          queryRunner
         );
       }
 
@@ -241,10 +234,7 @@ export class InvestHistoryService {
       await entityManager.remove(historyEntity);
 
       //요약 데이터 생성/갱신
-      await this.investSummaryService.upsertSummary(itemIdx, unitIdx, historyDate, queryRunner, {
-        ignoreUnitCheck: true,
-        ignoreItemCheck: true,
-      });
+      await this.investSummaryService.upsertAllSummary(itemIdx, unitIdx, historyDate, queryRunner);
 
       await queryRunner.commitTransaction();
 

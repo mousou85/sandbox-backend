@@ -3,7 +3,7 @@ import {InjectRepository} from '@nestjs/typeorm';
 import {QueryRunner, Repository, SelectQueryBuilder} from 'typeorm';
 
 import {InvestItemEntity} from '@app/invest/entity';
-import {BaseRepository, EYNState, IFindAllResult, IQueryListOption} from '@common/db';
+import {BaseRepository, IFindAllResult, IQueryListOption} from '@common/db';
 import {TypeOrmHelper} from '@common/helper';
 
 export interface IInvestItemCondition {
@@ -11,7 +11,6 @@ export interface IInvestItemCondition {
   group_idx?: number;
   user_idx?: number;
   item_type?: string;
-  is_close?: EYNState;
 }
 
 export interface IInvestItemJoinOption {
@@ -48,7 +47,7 @@ export class InvestItemRepository extends BaseRepository<InvestItemEntity> {
     queryBuilder: SelectQueryBuilder<InvestItemEntity>,
     condition: IInvestItemCondition
   ) {
-    const {item_idx, group_idx, user_idx, item_type, is_close} = condition;
+    const {item_idx, group_idx, user_idx, item_type} = condition;
 
     if (item_idx) {
       Array.isArray(item_idx)
@@ -65,9 +64,6 @@ export class InvestItemRepository extends BaseRepository<InvestItemEntity> {
     }
     if (item_type) {
       queryBuilder.andWhere('item.item_type = :item_type', {item_type});
-    }
-    if (is_close) {
-      queryBuilder.andWhere('item.is_close = :is_close', {is_close});
     }
 
     return queryBuilder;

@@ -5,7 +5,6 @@ import {IsNotEmpty, IsOptional, MaxLength, ValidateNested} from 'class-validator
 import {InvestUnitDto} from '@app/invest/dto';
 import {InvestItemEntity} from '@app/invest/entity';
 import {EInvestItemType, EInvestItemTypeLabel} from '@app/invest/invest.enum';
-import {EYNState} from '@common/db';
 import {IsDateOnlyString, IsDateString, IsEnum, IsInt} from '@common/decorator/validate';
 import {DefaultDto, DtoTransform} from '@common/dto';
 
@@ -41,13 +40,6 @@ export class InvestItemDtoSimple extends DefaultDto {
   @Transform(({value}) => DtoTransform.parseDate(value))
   createdAt: string;
 
-  @ApiProperty({description: '투자 종료 여부', type: 'enum', enum: EYNState, required: true})
-  @Expose()
-  @IsEnum(EYNState, {allowEmptyString: false})
-  @IsNotEmpty()
-  @Transform(({value}) => DtoTransform.trim(value))
-  isClose: EYNState;
-
   @ApiProperty({description: '투자 종료 시간(또는 만기일)', example: 'YYYY-MM-DD', required: false})
   @Expose()
   @IsDateOnlyString({allowEmptyString: false, format: 'full'})
@@ -69,7 +61,6 @@ export class InvestItemDtoSimple extends DefaultDto {
       this.itemType = investItemEntity.item_type;
       this.itemName = investItemEntity.item_name;
       this.createdAt = investItemEntity.created_at;
-      this.isClose = investItemEntity.is_close;
       if (investItemEntity.closed_at) this.closedAt = investItemEntity.closed_at;
     }
   }
@@ -115,5 +106,5 @@ export class CreateInvestItemDto extends PickType(InvestItemDtoSimple, [
  * 상품 수정 DTO
  */
 export class UpdateInvestItemDto extends PartialType(
-  PickType(InvestItemDtoSimple, ['itemType', 'itemName', 'isClose', 'closedAt'] as const)
+  PickType(InvestItemDtoSimple, ['itemType', 'itemName', 'closedAt'] as const)
 ) {}

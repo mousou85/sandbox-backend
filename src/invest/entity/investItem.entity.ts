@@ -13,11 +13,11 @@ import {
 import {InvestGroupEntity, InvestUnitEntity} from '@app/invest/entity';
 import {EInvestItemType} from '@app/invest/invest.enum';
 import {UserEntity} from '@app/user/entity';
-import {DateTransformer, EYNState} from '@common/db';
+import {DateTransformer} from '@common/db';
 
 @Entity('invest_item')
 @Index('IDX_USER', ['user_idx'])
-@Index('IDX_ITEM_TYPE', ['item_type', 'is_close'])
+@Index('IDX_ITEM_TYPE', ['item_type'])
 @Index('IDX_SUMMARY_UNIT', ['summary_unit_idx'])
 export class InvestItemEntity extends BaseEntity {
   @PrimaryGeneratedColumn({
@@ -61,14 +61,6 @@ export class InvestItemEntity extends BaseEntity {
     transformer: new DateTransformer(),
   })
   created_at: string;
-
-  @Column({
-    type: 'enum',
-    enum: EYNState,
-    nullable: false,
-    default: EYNState.n,
-  })
-  is_close: EYNState;
 
   @Column({
     type: 'date',

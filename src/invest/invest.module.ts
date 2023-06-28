@@ -31,6 +31,7 @@ import {
   InvestGroupService,
   InvestHistoryService,
   InvestItemService,
+  InvestSummaryDateService,
   InvestSummaryService,
   InvestUnitService,
 } from '@app/invest/service';
@@ -68,6 +69,7 @@ import {
     InvestItemService,
     InvestUnitService,
     InvestHistoryService,
+    InvestSummaryDateService,
     InvestSummaryService,
   ],
   exports: [],

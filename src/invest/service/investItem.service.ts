@@ -85,14 +85,15 @@ export class InvestItemService {
    * @param createDto
    */
   async createItem(userIdx: number, createDto: CreateInvestItemDto): Promise<InvestItemEntity> {
+    //set vars: create dto props
+    const {itemType, itemName, closedAt} = createDto;
+
     //상품 insert
     const itemEntity = this.investItemRepository.create();
     itemEntity.user_idx = userIdx;
-    itemEntity.item_type = createDto.itemType;
-    itemEntity.item_name = createDto.itemName;
-    if (createDto.closedAt) {
-      itemEntity.closed_at = createDto.closedAt;
-    }
+    itemEntity.item_type = itemType;
+    itemEntity.item_name = itemName;
+    if (closedAt) itemEntity.closed_at = closedAt;
     await this.investItemRepository.save(itemEntity);
 
     return itemEntity;
@@ -106,25 +107,19 @@ export class InvestItemService {
   async updateItem(itemIdx: number, updateDto: UpdateInvestItemDto): Promise<InvestItemEntity> {
     const itemEntity = await this.investItemRepository.findOneBy({item_idx: itemIdx});
     if (!itemEntity) throw new DataNotFoundException('invest item');
-    const oldIsClose = itemEntity.is_close;
     const oldClosedAt = itemEntity.closed_at;
 
     //set vars: update dto props
-    const {itemType, itemName, isClose, closedAt} = updateDto;
+    const {itemType, itemName, closedAt} = updateDto;
 
     //상품 update
     if (itemType) itemEntity.item_type = itemType;
     if (itemName) itemEntity.item_name = itemName;
-    if (isClose) {
-      itemEntity.is_close = isClose;
-    }
-    if (closedAt) {
-      itemEntity.closed_at = closedAt;
-    }
+    if (closedAt) itemEntity.closed_at = closedAt;
     await this.investItemRepository.save(itemEntity);
 
     //상품 종료 관련 값이 변경되었으면 summary 데이터 업데이트
-    if (isClose != oldIsClose || closedAt != oldClosedAt) {
+    if (closedAt != oldClosedAt) {
       await this.investSummaryService.remakeSummary(itemIdx);
     }
 
